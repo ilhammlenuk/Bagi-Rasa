@@ -1,0 +1,2454 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0F5D4E">
+<title>Bagi Rasa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  :root{
+    --green:#0F5D4E; --leaf:#4CAF7A; --orange:#F47B4A; --yellow:#F6C667;
+    --brown:#8B5E3C; --cream:#FAF9F6; --cream-dim:#F1EEE4;
+    --ink:#163C33; --ink-soft:#5C7268; --gray:#b3ada2;
+    --peternak:#B5651D; --bumi:#6E8B3D;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    font-family:'Plus Jakarta Sans', sans-serif;
+    background:var(--cream); color:var(--ink);
+    overscroll-behavior-y:none;
+  }
+  button{font-family:inherit; cursor:pointer; border:none; background:none; -webkit-appearance:none;}
+  input{font-family:inherit;}
+  img{display:block; max-width:100%;}
+  .display{font-family:'Fredoka', sans-serif;}
+
+  /* ----- app shell, centered phone frame on wide screens ----- */
+  .phone{
+    max-width:460px; margin:0 auto; min-height:100dvh;
+    background:var(--cream); position:relative;
+    display:flex; flex-direction:column;
+  }
+  @media (min-width:520px){
+    body{background:#e7e3d8; padding:24px 0;}
+    .phone{min-height:calc(100dvh - 48px); border-radius:36px; overflow:hidden; box-shadow:0 30px 70px rgba(15,42,34,0.28);}
+  }
+
+  .topbar{position:sticky; top:0; z-index:20; background:var(--cream); padding:18px 20px 10px;}
+  .topbar-row{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+  .brand{display:flex; align-items:center; gap:8px;}
+  .brand span{font-size:1.25rem; font-weight:600; color:var(--green);}
+  .back-link{display:flex; align-items:center; gap:4px; font-weight:700; font-size:0.92rem; color:var(--green);}
+
+  .cart-btn{
+    position:relative; width:40px; height:40px; border-radius:50%;
+    background:var(--cream-dim); display:flex; align-items:center; justify-content:center;
+  }
+  .cart-badge{
+    position:absolute; top:-3px; right:-3px; background:var(--orange); color:#fff;
+    font-size:0.62rem; font-weight:800; width:19px; height:19px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  .content{flex:1; overflow-y:auto; padding:0 20px 110px; -webkit-overflow-scrolling:touch;}
+
+  .loc{display:flex; align-items:center; gap:4px; font-size:0.85rem; color:var(--ink-soft); margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;}
+  h1.page-title{font-size:1.55rem; margin-bottom:16px; color:var(--green); font-weight:600;}
+  h2.section-title{font-size:1.5rem; margin-bottom:18px; color:var(--green); font-weight:600;}
+
+  .search-bar{
+    display:flex; align-items:center; gap:8px; background:#fff;
+    border:2px solid var(--cream-dim); border-radius:100px; padding:11px 16px; margin-bottom:14px;
+  }
+  .search-bar input{flex:1; border:none; outline:none; font-size:0.92rem; background:transparent; color:var(--ink);}
+
+  .chip-row{display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; margin:0 -20px 14px; padding-left:20px; padding-right:20px;}
+  .chip-row::-webkit-scrollbar{display:none;}
+  .chip{
+    flex-shrink:0; white-space:nowrap; font-size:0.86rem; font-weight:700;
+    padding:8px 16px; border-radius:100px; border:1.5px solid var(--cream-dim); color:var(--ink-soft); background:#fff;
+  }
+  .chip.active{background:var(--green); color:#fff; border-color:var(--green);}
+
+  .toggle-row{display:flex; align-items:center; gap:10px; margin-bottom:12px;}
+  .toggle{display:flex; background:var(--cream-dim); border-radius:100px; padding:4px;}
+  .toggle button{
+    display:flex; align-items:center; gap:5px; font-size:0.78rem; font-weight:800;
+    padding:7px 12px; border-radius:100px; color:var(--ink-soft);
+  }
+  .toggle button.active{background:#fff; color:var(--green); box-shadow:0 2px 6px rgba(15,42,34,0.12);}
+  .radius-control{flex:1; display:flex; align-items:center; gap:8px;}
+  .radius-control span{font-size:0.78rem; font-weight:700; color:var(--ink-soft); white-space:nowrap;}
+  .radius-control input[type=range]{flex:1; accent-color:var(--green);}
+
+  .map-wrap{margin-bottom:18px;}
+  .map-wrap svg{width:100%; border-radius:20px; background:var(--cream-dim); touch-action:pan-y;}
+  .map-legend{display:flex; gap:16px; margin-top:8px; padding:0 2px; font-size:0.72rem; color:var(--ink-soft);}
+  .map-legend span{display:inline-flex; align-items:center; gap:5px;}
+  .dot{width:9px; height:9px; border-radius:50%; display:inline-block;}
+
+  .deal-list{display:flex; flex-direction:column; gap:14px;}
+  .deal-card{
+    display:flex; gap:12px; background:#fff; border-radius:18px; padding:12px;
+    box-shadow:0 6px 18px rgba(15,42,34,0.07); text-align:left;
+  }
+  .deal-card img{width:92px; height:92px; border-radius:14px; object-fit:cover; flex-shrink:0;}
+  .deal-info{flex:1; min-width:0; padding:2px 0;}
+  .deal-cat{font-size:0.7rem; font-weight:800; color:var(--leaf); margin-bottom:2px;}
+  .deal-name{font-size:0.92rem; font-weight:700; margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .deal-time{display:flex; align-items:center; gap:4px; font-size:0.76rem; color:var(--ink-soft); margin-bottom:8px;}
+  .deal-foot{display:flex; align-items:center; justify-content:space-between;}
+  .price-old{font-size:0.72rem; color:var(--gray); text-decoration:line-through; margin-right:5px;}
+  .price-new{font-family:'Fredoka'; font-weight:600; font-size:1.02rem; color:var(--green);}
+  .stock-pill{font-size:0.62rem; font-weight:800; color:#fff; padding:3px 8px; border-radius:100px;}
+
+  .empty-state{text-align:center; padding:60px 0; color:var(--ink-soft); font-size:0.92rem;}
+
+  /* ----- detail view ----- */
+  .detail-img{width:100%; height:210px; object-fit:cover; border-radius:20px; margin-bottom:14px;}
+  .detail-cat{font-size:0.78rem; font-weight:800; color:var(--leaf); margin-bottom:4px;}
+  .detail-name{font-size:1.5rem; font-weight:600; color:var(--green); margin-bottom:8px;}
+  .detail-rating{display:flex; align-items:center; gap:5px; font-size:0.86rem; color:var(--ink-soft); margin-bottom:16px;}
+  .detail-desc{font-size:0.88rem; color:var(--ink-soft); margin-bottom:18px;}
+  .pickup-box{
+    display:flex; align-items:center; gap:12px; background:var(--cream-dim);
+    border-radius:16px; padding:14px 16px; margin-bottom:18px;
+  }
+  .pickup-box strong{display:block; font-size:0.86rem; font-weight:800; color:var(--ink);}
+  .pickup-box small{font-size:0.72rem; font-weight:700; color:var(--ink-soft);}
+  .price-qty-row{display:flex; align-items:center; justify-content:space-between; margin-bottom:22px;}
+  .qty-stepper{display:flex; align-items:center; gap:12px; background:var(--cream-dim); border-radius:100px; padding:6px;}
+  .qty-stepper button{width:32px; height:32px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center;}
+  .qty-stepper span{width:20px; text-align:center; font-weight:800;}
+  .price-big{font-family:'Fredoka'; font-size:1.6rem; font-weight:600; color:var(--green);}
+
+  .btn{
+    display:block; width:100%; text-align:center; padding:15px; border-radius:100px;
+    font-weight:800; font-size:0.92rem; color:#fff;
+  }
+  .btn-green{background:var(--green);}
+  .btn-orange{background:var(--orange);}
+
+  /* ----- cart ----- */
+  .cart-item{display:flex; gap:12px; background:#fff; border-radius:18px; padding:12px; box-shadow:0 6px 18px rgba(15,42,34,0.06); margin-bottom:12px;}
+  .cart-item img{width:64px; height:64px; border-radius:12px; object-fit:cover;}
+  .cart-item-info{flex:1;}
+  .cart-item-name{font-size:0.9rem; font-weight:700; margin-bottom:2px;}
+  .cart-item-time{font-size:0.72rem; color:var(--ink-soft); margin-bottom:6px;}
+  .cart-item-foot{display:flex; align-items:center; justify-content:space-between; font-size:0.8rem; gap:8px;}
+  .cart-qty-stepper{display:flex; align-items:center; gap:8px; background:var(--cream-dim); border-radius:100px; padding:3px;}
+  .cart-qty-stepper button{width:24px; height:24px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .cart-qty-stepper button svg{width:12px; height:12px;}
+  .cart-qty-stepper span{min-width:14px; text-align:center; font-weight:800; font-size:0.8rem;}
+  .cart-item-remove{width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--orange); flex-shrink:0;}
+  .cart-item-remove:active{background:var(--cream-dim);}
+  .cart-item-topline{display:flex; align-items:flex-start; justify-content:space-between; gap:8px;}
+  .impact-note{
+    display:flex; align-items:center; gap:8px; background:var(--cream-dim); border-radius:16px;
+    padding:13px 15px; margin:14px 0 20px; font-size:0.84rem; color:var(--ink-soft);
+  }
+  .total-row{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;}
+  .total-row span:first-child{font-weight:700; color:var(--ink-soft);}
+  .total-row span:last-child{font-family:'Fredoka'; font-size:1.35rem; font-weight:600; color:var(--green);}
+
+  /* ----- success ----- */
+  .success-wrap{text-align:center; padding-top:20px;}
+  .success-check{
+    width:78px; height:78px; border-radius:50%; background:var(--leaf); color:#fff;
+    display:flex; align-items:center; justify-content:center; margin:0 auto 18px; font-size:2rem;
+  }
+  .success-code{
+    display:inline-block; background:var(--cream-dim); border-radius:16px; padding:14px 30px;
+    margin:0 auto 22px; letter-spacing:0.14em;
+  }
+  .success-code span{font-family:'Fredoka'; font-size:1.5rem; font-weight:700; color:var(--green);}
+  .receipt{background:#fff; border-radius:16px; padding:16px; text-align:left; box-shadow:0 6px 18px rgba(15,42,34,0.06); margin-bottom:20px;}
+  .receipt-row{display:flex; justify-content:space-between; font-size:0.85rem; padding:5px 0;}
+  .receipt-total{border-top:1px solid var(--cream-dim); margin-top:6px; padding-top:9px; font-weight:800;}
+
+  /* ----- orders / profile ----- */
+  .order-card{background:#fff; border-radius:16px; padding:14px 16px; box-shadow:0 6px 18px rgba(15,42,34,0.06); margin-bottom:12px;}
+  .order-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;}
+  .order-code{font-weight:800; color:var(--green); font-size:0.9rem;}
+  .status-pill{font-size:0.6rem; font-weight:800; color:#fff; background:var(--leaf); padding:3px 9px; border-radius:100px;}
+  .order-item{font-size:0.75rem; color:var(--ink-soft);}
+  .order-total{font-weight:800; margin-top:6px; font-size:0.88rem;}
+
+  .profile-card{display:flex; align-items:center; gap:14px; background:#fff; border-radius:18px; padding:18px; box-shadow:0 6px 18px rgba(15,42,34,0.06); margin-bottom:14px;}
+  .avatar{width:54px; height:54px; border-radius:50%; background:var(--leaf); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.1rem;}
+  .stat-box{background:var(--cream-dim); border-radius:18px; padding:18px; display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:14px;}
+  .stat-box .num{font-family:'Fredoka'; font-size:1.6rem; font-weight:600; color:var(--green);}
+  .stat-box .lbl{font-size:0.72rem; color:var(--ink-soft);}
+  .settings-list{background:#fff; border-radius:18px; box-shadow:0 6px 18px rgba(15,42,34,0.06); overflow:hidden;}
+  .settings-list div, .settings-list button{
+    display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; text-align:left;
+    padding:15px 18px; font-size:0.88rem; font-weight:700; border-bottom:1px solid var(--cream-dim); color:var(--ink);
+  }
+  .settings-list div:last-child, .settings-list button:last-child{border-bottom:none;}
+  .settings-list button:active{background:var(--cream-dim);}
+  .settings-list .chev{color:var(--gray); flex-shrink:0; display:flex;}
+  .settings-sub{display:block; font-weight:600; font-size:0.72rem; color:var(--ink-soft); margin-top:2px;}
+
+  /* ----- pilihan alamat / metode pembayaran ----- */
+  .select-row{
+    display:flex; align-items:center; gap:12px; background:#fff; border-radius:16px; padding:14px 16px;
+    margin-bottom:10px; box-shadow:0 6px 18px rgba(15,42,34,0.06); width:100%; text-align:left;
+  }
+  .select-row.active{box-shadow:0 0 0 2px var(--green) inset;}
+  .select-radio{width:20px; height:20px; border-radius:50%; border:2px solid var(--gray); flex-shrink:0; display:flex; align-items:center; justify-content:center;}
+  .select-row.active .select-radio{border-color:var(--green);}
+  .select-radio .dot{width:10px; height:10px; border-radius:50%; background:var(--green);}
+  .select-info{flex:1; min-width:0;}
+  .select-info strong{display:block; font-size:0.88rem; font-weight:800;}
+  .select-info span{font-size:0.76rem; color:var(--ink-soft);}
+  .add-row{
+    display:flex; align-items:center; justify-content:center; gap:6px; width:100%; padding:14px;
+    border-radius:16px; border:1.5px dashed var(--gray); color:var(--ink-soft); font-weight:800; font-size:0.86rem; margin-bottom:14px;
+  }
+  .add-row:active{background:var(--cream-dim);}
+
+  /* ----- notifikasi ----- */
+  .notif-row{
+    display:flex; align-items:center; justify-content:space-between; gap:12px; background:#fff;
+    border-radius:16px; padding:14px 16px; margin-bottom:10px; box-shadow:0 6px 18px rgba(15,42,34,0.06);
+  }
+  .notif-info strong{display:block; font-size:0.86rem; font-weight:800; margin-bottom:2px;}
+  .notif-info span{font-size:0.74rem; color:var(--ink-soft);}
+  .switch{position:relative; width:44px; height:26px; flex-shrink:0;}
+  .switch input{opacity:0; width:0; height:0; position:absolute;}
+  .switch .slider{position:absolute; inset:0; background:var(--cream-dim); transition:.2s; border-radius:100px; cursor:pointer;}
+  .switch .slider:before{position:absolute; content:""; height:20px; width:20px; left:3px; top:3px; background:#fff; transition:.2s; border-radius:50%; box-shadow:0 1px 3px rgba(0,0,0,0.25);}
+  .switch input:checked + .slider{background:var(--green);}
+  .switch input:checked + .slider:before{transform:translateX(18px);}
+
+  /* ----- bantuan / FAQ ----- */
+  .faq-item{background:#fff; border-radius:16px; padding:0 16px; margin-bottom:10px; box-shadow:0 6px 18px rgba(15,42,34,0.06);}
+  .faq-item summary{
+    list-style:none; padding:14px 0; font-size:0.86rem; font-weight:800; cursor:pointer;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .faq-item summary::-webkit-details-marker{display:none;}
+  .faq-item summary .chev{color:var(--gray); flex-shrink:0; transition:transform .2s;}
+  .faq-item[open] summary .chev{transform:rotate(90deg);}
+  .faq-item p{font-size:0.82rem; color:var(--ink-soft); padding-bottom:14px; line-height:1.55;}
+  .help-contact{
+    display:flex; align-items:center; justify-content:center; gap:8px; background:var(--leaf); color:#fff;
+    font-weight:800; font-size:0.88rem; padding:14px; border-radius:100px; margin-top:8px;
+  }
+
+  /* ----- bottom nav ----- */
+  .bottom-nav{
+    position:sticky; bottom:0; left:0; right:0; background:#fff; border-top:1px solid var(--cream-dim);
+    display:flex; justify-content:space-around; padding:10px 0 max(10px, env(safe-area-inset-bottom));
+    z-index:20;
+  }
+  .nav-btn{display:flex; flex-direction:column; align-items:center; gap:3px; padding:2px 12px; color:var(--gray);}
+  .nav-btn.active{color:var(--green);}
+  .nav-btn span{font-size:0.64rem; font-weight:800;}
+  .icon{width:20px; height:20px; display:block;}
+
+  /* ----- Harga Kejutan: live countdown / dynamic price ----- */
+  .urgency-badge{
+    display:inline-flex; align-items:center; gap:4px; font-size:0.66rem; font-weight:800;
+    color:var(--brown); background:var(--yellow); padding:2px 8px; border-radius:100px; margin-bottom:6px;
+  }
+  .urgency-badge.hot{color:#fff; background:var(--orange); animation:pulse 1.4s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.045);}}
+  .price-drop-flash{animation:flash .6s ease;}
+  @keyframes flash{0%{background:var(--yellow);}100%{background:transparent;}}
+  .detail-urgency{display:flex; align-items:center; gap:6px; margin-bottom:10px;}
+
+  /* ----- Poin Rasa gamification ----- */
+  .level-card{background:linear-gradient(135deg, var(--green), #127662); color:#fff; border-radius:20px; padding:20px; margin-bottom:16px;}
+  .level-top{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;}
+  .level-name{font-family:'Fredoka'; font-size:1.1rem; font-weight:600;}
+  .level-pts{font-size:0.78rem; opacity:0.85;}
+  .progress-outer{background:rgba(255,255,255,0.22); border-radius:100px; height:9px; overflow:hidden;}
+  .progress-inner{background:var(--yellow); height:100%; border-radius:100px; transition:width .4s ease;}
+  .progress-caption{font-size:0.7rem; opacity:0.8; margin-top:6px;}
+  .leaderboard{background:#fff; border-radius:18px; box-shadow:0 6px 18px rgba(15,42,34,0.06); overflow:hidden; margin-bottom:14px;}
+  .lb-row{display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid var(--cream-dim); font-size:0.85rem;}
+  .lb-row:last-child{border-bottom:none;}
+  .lb-row.me{background:var(--cream-dim);}
+  .lb-rank{width:20px; font-weight:800; color:var(--ink-soft);}
+  .lb-name{flex:1; font-weight:700;}
+  .lb-pts{font-weight:800; color:var(--green);}
+
+  /* ----- login / daftar ----- */
+  .auth-screen{flex:1; display:flex; flex-direction:column; justify-content:center; padding:36px 26px; overflow-y:auto;}
+  .auth-logo{display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:6px;}
+  .auth-logo span{font-size:1.5rem; font-weight:600; color:var(--green);}
+  .auth-tag{text-align:center; font-size:0.86rem; color:var(--ink-soft); margin-bottom:26px;}
+  .auth-toggle{align-self:center; margin-bottom:22px;}
+  .auth-toggle button{padding:9px 24px;}
+  .auth-error{background:#FDEDEA; color:#C0392B; font-size:0.8rem; font-weight:700; padding:10px 14px; border-radius:12px; margin-bottom:14px; text-align:center;}
+  .field-group{margin-bottom:14px;}
+  .field-group label{display:block; font-size:0.76rem; font-weight:800; color:var(--ink-soft); margin-bottom:6px;}
+  .field-group input{width:100%; border:2px solid var(--cream-dim); border-radius:14px; padding:12px 14px; font-size:0.9rem; outline:none; background:#fff; color:var(--ink);}
+  .field-group input:focus{border-color:var(--green);}
+  .auth-forgot{display:block; text-align:right; width:100%; font-size:0.78rem; font-weight:800; color:var(--green); margin:-6px 0 16px;}
+  .auth-form .btn{margin-top:4px;}
+  .auth-guest{display:block; text-align:center; width:100%; margin-top:18px; font-size:0.82rem; font-weight:800; color:var(--ink-soft);}
+
+  /* ----- keluar akun ----- */
+  .logout-btn{
+    display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:14px;
+    margin-top:14px; border-radius:100px; border:1.5px solid var(--orange); color:var(--orange); font-weight:800; font-size:0.88rem;
+  }
+
+  /* ----- pembayaran QR ----- */
+  .qr-card{background:#fff; border-radius:22px; padding:26px 20px; text-align:center; box-shadow:0 6px 18px rgba(15,42,34,0.07); margin-bottom:16px;}
+  .qr-box{display:inline-flex; padding:14px; background:#fff; border:1.5px solid var(--cream-dim); border-radius:16px; margin-bottom:14px;}
+  .qr-box svg{display:block;}
+  .qr-amount{font-family:'Fredoka'; font-size:1.6rem; font-weight:600; color:var(--green); margin-bottom:4px;}
+  .qr-buyer{font-size:0.88rem; font-weight:800; color:var(--ink); margin-bottom:4px;}
+  .qr-ref{font-size:0.76rem; color:var(--ink-soft); letter-spacing:0.02em; margin-bottom:14px;}
+  .qr-ref strong{color:var(--green); letter-spacing:0.06em;}
+  .cash-icon{color:var(--leaf); display:flex; justify-content:center; margin-bottom:6px;}
+  .qr-timer-badge{display:inline-flex; align-items:center; gap:6px; font-size:0.76rem; font-weight:800; color:var(--brown); background:var(--yellow); padding:6px 12px; border-radius:100px;}
+  .qr-hint{font-size:0.82rem; color:var(--ink-soft); text-align:center; margin-bottom:18px; line-height:1.5;}
+  .qr-cancel{display:block; width:100%; text-align:center; padding:14px; margin-top:10px; font-size:0.86rem; font-weight:800; color:var(--ink-soft);}
+
+  .pay-method-row{display:flex; align-items:center; justify-content:space-between; background:#fff; border-radius:16px; padding:12px 16px; margin-bottom:14px; box-shadow:0 6px 18px rgba(15,42,34,0.06);}
+  .pay-method-lbl{font-size:0.72rem; font-weight:700; color:var(--ink-soft);}
+  .pay-method-name{font-weight:800; font-size:0.9rem;}
+  .pay-change-btn{font-size:0.78rem; font-weight:800; color:var(--green); background:var(--cream-dim); padding:8px 14px; border-radius:100px;}
+
+  /* ----- Surprise Bag tag ----- */
+  .sbag-tag{display:inline-flex; align-items:center; gap:4px; font-size:0.62rem; font-weight:800; color:var(--green); background:#fff; border:1.3px solid var(--green); padding:2px 8px; border-radius:100px; margin-bottom:6px;}
+  .sbag-tag svg{width:11px; height:11px;}
+  .price-info-btn{display:inline-flex; align-items:center; gap:4px; font-size:0.72rem; font-weight:800; color:var(--green); margin:2px 0 14px; background:var(--cream-dim); padding:8px 12px; border-radius:100px;}
+  .price-info-box{background:var(--cream-dim); border-radius:16px; padding:14px 16px; margin:0 0 16px; font-size:0.8rem; color:var(--ink-soft); line-height:1.55;}
+  .price-info-box strong{display:block; color:var(--ink); font-size:0.84rem; margin-bottom:6px;}
+  .price-info-box ul{margin:6px 0 0 18px;}
+
+  /* ----- 3-jalur pemanfaatan surplus: Bagi Kamu / Bagi Peternak / Bagi Bumi ----- */
+  .tier-badge{font-size:0.62rem; font-weight:800; color:#fff; padding:3px 9px; border-radius:100px; display:inline-flex; align-items:center; gap:4px; flex-shrink:0;}
+  .tier-badge.kamu{background:var(--green);}
+  .tier-badge.peternak{background:var(--peternak);}
+  .tier-badge.bumi{background:var(--bumi);}
+  .tier-bar{display:flex; height:14px; border-radius:100px; overflow:hidden; margin:12px 0 8px; background:var(--cream-dim);}
+  .tier-bar div{height:100%;}
+  .tier-legend{display:flex; flex-wrap:wrap; gap:12px; font-size:0.72rem; color:var(--ink-soft); margin-bottom:18px;}
+  .tier-legend span{display:inline-flex; align-items:center; gap:5px;}
+  .tier-legend-item{cursor:pointer; background:#fff; border:1.5px solid var(--cream-dim); padding:6px 10px 6px 8px; border-radius:100px; font-weight:700; transition:border-color .15s;}
+  .tier-legend-item:active{border-color:var(--green);}
+  .tier-legend-item .chev{width:12px; height:12px; margin-left:1px; opacity:.6;}
+  .tier-bar div{cursor:pointer;}
+  .tier-detail-head{background:#fff; border-radius:16px; padding:14px 16px; margin-bottom:16px; box-shadow:0 6px 18px rgba(15,42,34,0.06);}
+  .tier-detail-head .tier-badge{margin-bottom:8px;}
+  .tier-detail-head p{font-size:0.85rem; color:var(--ink-soft); line-height:1.4;}
+  .mitra-auth-back{display:block; text-align:center; font-size:0.8rem; font-weight:700; color:var(--peternak); margin-bottom:10px;}
+
+  /* ----- Dashboard UMKM ----- */
+  .role-banner{display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--green); color:#fff; border-radius:16px; padding:12px 16px; margin-bottom:16px;}
+  .role-banner strong{display:block; font-size:0.88rem;}
+  .role-banner span{font-size:0.72rem; opacity:0.85;}
+  .role-banner button{font-size:0.72rem; font-weight:800; color:var(--green); background:#fff; padding:7px 12px; border-radius:100px; flex-shrink:0;}
+  .kpi-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;}
+  .kpi-card{background:#fff; border-radius:16px; padding:14px; box-shadow:0 6px 18px rgba(15,42,34,0.06);}
+  .kpi-card .num{font-family:'Fredoka'; font-size:1.3rem; font-weight:600; color:var(--green);}
+  .kpi-card .lbl{font-size:0.7rem; color:var(--ink-soft); margin-top:2px;}
+  .section-sub{font-size:0.92rem; font-weight:800; color:var(--ink); margin:20px 0 10px;}
+  .umkm-item-card{background:#fff; border-radius:16px; padding:13px 15px; margin-bottom:10px; box-shadow:0 6px 18px rgba(15,42,34,0.06);}
+  .umkm-item-top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:6px;}
+  .umkm-item-name{font-weight:800; font-size:0.9rem;}
+  .umkm-item-meta{font-size:0.74rem; color:var(--ink-soft); line-height:1.5;}
+  .checklist-row{display:flex; align-items:flex-start; gap:10px; background:var(--cream-dim); border-radius:14px; padding:12px 14px; margin-bottom:10px; cursor:pointer;}
+  .checklist-row input{margin-top:3px; width:18px; height:18px; accent-color:var(--green); flex-shrink:0;}
+  .checklist-row strong{display:block; font-size:0.84rem; margin-bottom:2px;}
+  .checklist-row span{font-size:0.74rem; color:var(--ink-soft);}
+  .jalur-hint{background:var(--cream-dim); border-radius:14px; padding:12px 14px; font-size:0.8rem; color:var(--ink-soft); margin-bottom:16px; display:flex; align-items:flex-start; gap:8px;}
+  .jalur-hint strong{color:var(--ink);}
+  .form-row{margin-bottom:14px;}
+  .form-row label{display:block; font-size:0.76rem; font-weight:800; color:var(--ink-soft); margin-bottom:6px;}
+  .form-row input[type=text], .form-row input[type=number], .form-row select, .form-row input[type=time]{
+    width:100%; border:2px solid var(--cream-dim); border-radius:14px; padding:12px 14px; font-size:0.88rem; outline:none; background:#fff; color:var(--ink);
+  }
+  .form-row input:focus, .form-row select:focus{border-color:var(--green);}
+  .form-row-2{display:flex; gap:10px;}
+  .form-row-2 .form-row{flex:1;}
+  .role-switch-link{display:block; width:100%; text-align:center; font-size:0.82rem; font-weight:800; color:var(--green); margin-top:6px; padding:14px; border-radius:100px; border:1.5px solid var(--green);}
+  .mitra-card{display:flex; align-items:center; gap:12px; background:#fff; border-radius:16px; padding:14px 16px; margin-bottom:10px; box-shadow:0 6px 18px rgba(15,42,34,0.06);}
+  .mitra-icon{width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0;}
+  .mitra-info strong{display:block; font-size:0.86rem;}
+  .mitra-info span{font-size:0.74rem; color:var(--ink-soft);}
+
+  /* ----- notifikasi urgensi pengambilan pesanan ----- */
+  .pickup-urgency{display:inline-flex; align-items:center; gap:6px; font-size:0.72rem; font-weight:800; color:var(--brown); background:var(--yellow); padding:5px 10px; border-radius:100px; margin-top:8px;}
+  .pickup-urgency.hot{color:#fff; background:var(--orange); animation:pulse 1.4s ease-in-out infinite;}
+  .pickup-urgency.expired{background:var(--cream-dim); color:var(--ink-soft);}
+
+  /* ----- iklan promosi internal aplikasi ----- */
+  .promo-row{display:flex; gap:10px; overflow-x:auto; margin:0 -20px 18px; padding:0 20px 4px;}
+  .promo-row::-webkit-scrollbar{display:none;}
+  .promo-card{
+    flex-shrink:0; width:78%; max-width:280px; border-radius:18px; padding:16px 18px;
+    color:#fff; text-align:left; background:linear-gradient(135deg, var(--green), var(--leaf));
+    display:flex; flex-direction:column; gap:6px; box-shadow:0 10px 22px rgba(15,42,34,0.18);
+  }
+  .promo-card.orange{background:linear-gradient(135deg, var(--orange), var(--yellow));}
+  .promo-card.brown{background:linear-gradient(135deg, var(--brown), var(--peternak));}
+  .promo-card .promo-tag{font-size:0.66rem; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; opacity:0.85;}
+  .promo-card .promo-title{font-family:'Fredoka'; font-size:1.02rem; font-weight:600; line-height:1.25;}
+  .promo-card .promo-sub{font-size:0.74rem; opacity:0.92; line-height:1.3;}
+
+  /* ----- rating 1 arah: pembeli menilai UMKM ----- */
+  .detail-rating{cursor:default;}
+  .rating-box{background:var(--cream-dim); border-radius:14px; padding:12px 14px; margin-top:10px;}
+  .rating-box .rating-label{font-size:0.78rem; font-weight:800; color:var(--ink); margin-bottom:6px;}
+  .rating-stars{display:flex; gap:4px;}
+  .rating-stars button{width:26px; height:26px; display:flex; align-items:center; justify-content:center;}
+  .rating-stars button svg{width:22px; height:22px;}
+  .rating-done{font-size:0.76rem; color:var(--ink-soft);}
+  .report-link{font-size:0.74rem; font-weight:800; color:var(--orange); margin-top:8px; display:inline-block;}
+  .report-done{font-size:0.72rem; color:var(--ink-soft); margin-top:8px; font-style:italic;}
+  .roadmap-card{background:var(--cream-dim); border-radius:16px; padding:14px; margin-top:10px; display:flex; align-items:flex-start; gap:10px;}
+  .roadmap-card .roadmap-badge{font-size:0.6rem; font-weight:800; color:#fff; background:var(--gray); padding:3px 9px; border-radius:100px; flex-shrink:0;}
+  .roadmap-card p{font-size:0.76rem; color:var(--ink-soft);}
+
+  /* ----- moderasi: komplain, suspend, banned ----- */
+  .mod-banner{border-radius:16px; padding:14px 16px; margin-bottom:16px; color:#fff; font-size:0.82rem; line-height:1.4;}
+  .mod-banner.suspend{background:var(--orange);}
+  .mod-banner.banned{background:#B23A3A;}
+  .mod-banner strong{display:block; font-size:0.9rem; margin-bottom:3px;}
+  .status-chip{font-size:0.62rem; font-weight:800; padding:3px 9px; border-radius:100px; color:#fff; display:inline-block;}
+  .status-chip.aktif{background:var(--leaf);}
+  .status-chip.suspend{background:var(--orange);}
+  .status-chip.banned{background:#B23A3A;}
+  .complaint-item{background:#fff; border-radius:14px; padding:12px 14px; margin-bottom:8px; box-shadow:0 6px 18px rgba(15,42,34,0.06);}
+  .complaint-item .c-top{display:flex; justify-content:space-between; font-size:0.76rem; font-weight:800; margin-bottom:3px;}
+  .complaint-item .c-reason{font-size:0.8rem; color:var(--ink); margin-bottom:2px;}
+  .complaint-item .c-note{font-size:0.74rem; color:var(--ink-soft);}
+  textarea.complaint-note{width:100%; border:1.5px solid var(--cream-dim); border-radius:14px; padding:11px 14px; font-size:0.88rem; color:var(--ink); resize:vertical; min-height:80px; background:#fff;}
+  textarea.complaint-note:focus{border-color:var(--green); outline:none;}
+
+  /* ----- peta GPS live ----- */
+  .leaflet-container{font-family:inherit;}
+  .lm-search{display:flex; align-items:center; gap:8px; background:#fff; border:2px solid var(--cream-dim); border-radius:100px; padding:5px 5px 5px 14px; margin-bottom:8px;}
+  .lm-search input{flex:1; min-width:0; border:none; outline:none; font-size:0.86rem; background:transparent; color:var(--ink);}
+  .lm-search button{background:var(--green); color:#fff; font-weight:800; font-size:0.78rem; padding:9px 16px; border-radius:100px;}
+  .lm-res{background:#fff; border-radius:14px; box-shadow:0 6px 18px rgba(15,42,34,0.08); margin-bottom:8px; overflow:hidden; font-size:0.78rem;}
+  .lm-res button{display:block; width:100%; text-align:left; padding:10px 14px; color:var(--ink); border-bottom:1px solid var(--cream-dim); line-height:1.35;}
+  .lm-res button:last-child{border-bottom:none;}
+  .lm-res .lm-msg{padding:10px 14px; color:var(--ink-soft);}
+  .lm-wrap{position:relative; isolation:isolate; border-radius:20px; overflow:hidden; background:var(--cream-dim);}
+  #liveMapHost{height:330px; width:100%;}
+  .lm-btns{position:absolute; top:10px; right:10px; z-index:500;}
+  .lm-btns button{width:42px; height:42px; border-radius:50%; background:#fff; color:var(--green); display:flex; align-items:center; justify-content:center; box-shadow:0 3px 10px rgba(0,0,0,0.25);}
+  .lm-pin{width:30px; height:30px; border-radius:50%; color:#fff; font:800 12px 'Plus Jakarta Sans',sans-serif; display:flex; align-items:center; justify-content:center; border:2.5px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,0.3);}
+  .lm-pin.in{background:var(--orange);} .lm-pin.out{background:var(--gray); opacity:0.75;}
+  .lm-me{width:22px; height:22px; border-radius:50%; background:#2f80ed; border:3px solid #fff; animation:lmPulse 2s infinite;}
+  @keyframes lmPulse{0%{box-shadow:0 0 0 0 rgba(47,128,237,0.55);} 70%{box-shadow:0 0 0 16px rgba(47,128,237,0);} 100%{box-shadow:0 0 0 0 rgba(47,128,237,0);}}
+  .lm-flag{width:26px; height:26px; background:var(--green); border-radius:50% 50% 50% 0; transform:rotate(-45deg); border:3px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,0.3);}
+  .map-wrap .lm-search svg, .map-wrap .lm-btns svg{width:20px; height:20px; flex-shrink:0; background:none; border-radius:0;}
+  .lm-status{display:flex; align-items:center; gap:7px; font-size:0.74rem; color:var(--ink-soft); margin-top:8px; line-height:1.4;}
+</style>
+</head>
+<body>
+<div class="phone" id="app"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+/* ---------------- data ---------------- */
+const C = { green:"#0F5D4E", leaf:"#4CAF7A", orange:"#F47B4A", yellow:"#F6C667", gray:"#b3ada2" };
+const MAX_KM = 3, MAX_PX = 122;
+const ANGLE = {1:67, 2:134, 3:201, 4:268, 5:335, 6:42, 7:110, 8:300};
+
+const DEALS = [
+  {id:1,name:"Roti Bahagia Bakery",category:"Roti & kue",distance:"1.2 km",old:45000,price:15000,left:3,window:"20.00 – 21.00",
+   img:"https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500&q=80",
+   desc:"Campuran roti manis, roti tawar, dan pastry sisa produksi hari ini. Isi bisa berbeda tiap paket, semua masih segar."},
+  {id:2,name:"Warung Bu Sari",category:"Makanan berat",distance:"0.6 km",old:30000,price:12000,left:5,window:"19.30 – 20.30",
+   img:"https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=500&q=80",
+   desc:"Nasi campur dengan lauk pilihan hari ini: ayam, tempe, sayur, dan sambal khas rumahan."},
+  {id:3,name:"Pasar Segar Margonda",category:"Buah & sayur",distance:"2.1 km",old:35000,price:10000,left:8,window:"17.00 – 18.00",
+   img:"https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=500&q=80",
+   desc:"Sayur dan buah yang masih layak konsumsi tapi tampilannya tak lagi sempurna untuk dipajang."},
+  {id:4,name:"Kue Nusantara Ibu Tini",category:"Roti & kue",distance:"1.8 km",old:50000,price:18000,left:2,window:"18.00 – 19.00",
+   img:"https://images.unsplash.com/photo-1517433670267-08bbd4be890f?w=500&q=80",
+   desc:"Kue tradisional: klepon, lapis, dan kue basah lain, dibuat pagi hari dan belum habis terjual."},
+  {id:5,name:"Kedai Kopi Senja",category:"Minuman",distance:"0.9 km",old:25000,price:9000,left:6,window:"21.00 – 22.00",
+   img:"https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500&q=80",
+   desc:"Kopi dan minuman kemasan yang mendekati waktu tutup kedai, kualitas tetap terjaga."},
+  {id:6,name:"Resto Sederhana",category:"Makanan berat",distance:"1.5 km",old:40000,price:16000,left:4,window:"20.30 – 21.30",
+   img:"https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=500&q=80",
+   desc:"Menu harian restoran yang tersisa: bisa berupa nasi, lauk, dan sayur dalam kemasan siap bawa."},
+  {id:7,name:"Toko Buah Ceria Juanda",category:"Buah & sayur",distance:"1.3 km",old:32000,price:11000,left:7,window:"17.30 – 18.30",
+   img:"https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=500&q=80",
+   desc:"Buah potong dan buah utuh yang mendekati masa jual, masih segar dan layak konsumsi."},
+  {id:8,name:"Angkringan Malam Juanda",category:"Minuman",distance:"0.7 km",old:22000,price:8000,left:9,window:"21.30 – 22.30",
+   img:"https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500&q=80",
+   desc:"Wedang dan minuman hangat sisa jualan angkringan, dikemas rapi dan masih layak minum."},
+];
+const CATEGORIES = ["Semua","Roti & kue","Makanan berat","Buah & sayur","Minuman"];
+// Paket mana yang tersedia untuk masing-masing alamat pengambilan.
+// Karena tiap alamat mewakili area yang berbeda, warung terdekat pun berbeda.
+const DEAL_POOL_IDS = DEALS.map(d=>d.id);
+const ADDRESS_DEALS = {
+  1: [1,2,3,5],   // sekitar Rumah (Jl. Margonda Raya)
+  2: [4,6,7,8],   // sekitar Kantor (Jl. Juanda)
+};
+function dealIdsForAddress(addressId){
+  if (ADDRESS_DEALS[addressId]) return ADDRESS_DEALS[addressId];
+  // alamat baru yang ditambahkan user: acak subset tetap (deterministik) dari semua warung yang ada
+  return DEAL_POOL_IDS.filter(id => (id + addressId) % 2 === 0).length
+    ? DEAL_POOL_IDS.filter(id => (id + addressId) % 2 === 0)
+    : DEAL_POOL_IDS;
+}
+
+// Fitur "Bagi Peternak": surplus yang sudah tidak layak dikonsumsi manusia tapi aman jadi pakan ternak,
+// tetap bisa "dibeli" pembeli (mis. yang punya ternak/hewan peliharaan) dengan harga simbolis.
+const PAKAN_DEALS = [
+  {id:301, name:"Sisa Sayur & Kulit Buah", category:"Pakan Ternak", distance:"1.4 km", price:5000, left:6, window:"21.00 – 21.30",
+   img:"https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=500&q=80",
+   desc:"Sisa potongan sayur dan kulit buah dari beberapa mitra UMKM, dikumpulkan untuk campuran pakan ternak."},
+  {id:302, name:"Roti & Nasi Sisa Tidak Terjual", category:"Pakan Ternak", distance:"0.9 km", price:4000, left:4, window:"22.00 – 22.30",
+   img:"https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500&q=80",
+   desc:"Roti dan nasi sisa yang sudah tidak layak konsumsi manusia namun masih aman diolah jadi pakan ternak."},
+];
+
+// Bagi Bumi: sisa yang sudah tidak layak untuk manusia maupun ternak, tetap bisa "dibeli"
+// pembeli yang butuh bahan baku kompos/biokonversi (mis. yang berkebun).
+const KOMPOS_DEALS = [
+  {id:401, name:"Sisa Sayur & Buah Busuk", category:"Bahan Kompos", distance:"1.1 km", price:3000, left:8, window:"22.00 – 22.30",
+   img:"https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=500&q=80",
+   desc:"Sisa sayur dan buah yang sudah tidak layak untuk keduanya, cocok jadi bahan baku kompos/biokonversi."},
+  {id:402, name:"Ampas & Sisa Dapur Basah", category:"Bahan Kompos", distance:"1.6 km", price:2500, left:5, window:"22.30 – 23.00",
+   img:"https://images.unsplash.com/photo-1580217593608-61931cefc821?w=500&q=80",
+   desc:"Campuran ampas dan sisa dapur basah dari beberapa mitra UMKM, siap diolah jadi kompos."},
+];
+function tierDealPool(tier){ return tier==="peternak" ? PAKAN_DEALS : tier==="bumi" ? KOMPOS_DEALS : []; }
+
+/* ---------------- Harga Kejutan: harga otomatis turun mendekati tutup ----------------
+   Tiap paket punya "jam kedaluwarsa harga" tersimulasi; makin dekat waktunya, makin murah.
+
+   Aturan penurunan harga (algoritma Harga Kejutan) mempertimbangkan 3 faktor:
+   1) Sisa waktu menuju jam tutup/pengambilan (mins) — makin dekat, makin murah.
+   2) Sisa stok (left) — stok yang masih banyak menjelang tutup didorong turun lebih cepat
+      supaya lebih mungkin terserap sebelum masa simpan berakhir.
+   3) Jam tutup toko (window) — dipakai sebagai acuan waktu batas penjualan berlangsung. */
+DEALS.forEach((d, i) => { d.endsAt = Date.now() + (4 + i * 3 + Math.random() * 4) * 60000; });
+
+function timeLeftMs(d){ return Math.max(0, d.endsAt - Date.now()); }
+function stockUrgencyFactor(d){
+  // stok tersisa >=6 dianggap "masih banyak" mendekati tutup -> potongan tambahan
+  // supaya lebih besar peluang terjual habis sebelum masa simpan berakhir.
+  return d.left >= 6 ? 0.05 : 0;
+}
+function currentPrice(d){
+  const mins = timeLeftMs(d) / 60000;
+  const extra = stockUrgencyFactor(d);
+  let cut;
+  if (mins <= 3) cut = 0.40 + extra;       // diskon terbesar: <=3 menit menuju jam tutup
+  else if (mins <= 7) cut = 0.20 + extra;  // diskon menengah: <=7 menit
+  else cut = 0;                            // harga awal Harga Kejutan
+  const raw = d.price * (1 - Math.min(cut, 0.55));
+  return Math.round(raw/500)*500;
+}
+function urgencyLabel(d){
+  const ms = timeLeftMs(d);
+  const mins = Math.floor(ms/60000), secs = Math.floor((ms%60000)/1000);
+  return `${String(mins).padStart(2,"0")}:${String(secs).padStart(2,"0")}`;
+}
+function isHot(d){ return timeLeftMs(d)/60000 <= 7; }
+
+/* ---------------- rating 1 arah: pembeli menilai UMKM ---------------- */
+function shopRatingInfo(shopName){
+  const r = state.shopRatings[shopName];
+  if (!r || !r.count) return { avg:null, count:0 };
+  return { avg: r.sum / r.count, count: r.count };
+}
+function shopRatingLabel(shopName){
+  const info = shopRatingInfo(shopName);
+  return info.avg===null ? "Belum ada rating" : `${info.avg.toFixed(1)} · ${info.count} paket terjual`;
+}
+
+/* ---------------- Dashboard UMKM: 3-tier pemanfaatan surplus ----------------
+   Bagi Kamu    = surplus yang masih layak & aman dikonsumsi manusia, dijual sbg Surprise Bag
+                  lewat fitur Harga Kejutan sebelum masa simpannya habis.
+   Bagi Peternak= surplus yang sudah tidak layak dikonsumsi manusia namun masih aman diberikan
+                  sebagai pakan ternak, disalurkan ke mitra peternak terdekat.
+   Bagi Bumi    = sisa yang tidak layak untuk keduanya, disalurkan ke mitra pengolahan
+                  (komposting/biokonversi) supaya tidak berakhir sebagai limbah begitu saja. */
+const TIER_INFO = {
+  kamu:     { label:"Bagi Kamu",     color:"var(--green)",    desc:"Dijual ke konsumen sebagai Surprise Bag lewat Harga Kejutan." },
+  peternak: { label:"Bagi Peternak", color:"var(--peternak)", desc:"Disalurkan ke mitra peternak sebagai pakan ternak." },
+  bumi:     { label:"Bagi Bumi",     color:"var(--bumi)",     desc:"Disalurkan ke mitra pengolahan untuk kompos/biokonversi." },
+};
+
+// Mekanisme seleksi surplus: menentukan jalur berdasarkan jawaban checklist keamanan pangan UMKM.
+function tentukanJalur(item){
+  if (item.higienis && item.dalamBatasWaktu) return "kamu";
+  if (item.layakPakan) return "peternak";
+  return "bumi";
+}
+
+const MITRA_PENYALURAN = [
+  { nama:"Peternakan Ayam Pak Joko", jenis:"Mitra Peternak", jadwal:"Ambil tiap pukul 21.30", tier:"peternak" },
+  { nama:"Kelompok Tani Maju Bersama", jenis:"Mitra Peternak", jadwal:"Ambil tiap pukul 22.00", tier:"peternak" },
+  { nama:"Bank Sampah & Kompos Hijau Depok", jenis:"Mitra Pengolahan", jadwal:"Ambil tiap pukul 22.30", tier:"bumi" },
+];
+
+const UMKM_PROFILE = { name:"Warung Bu Sari", category:"Makanan berat", address:"Jl. Margonda Raya No. 12, Depok" };
+
+// Ambang batas moderasi akun Mitra UMKM berdasarkan jumlah komplain pembeli yang masuk.
+const COMPLAINT_SUSPEND_THRESHOLD = 3;
+const COMPLAINT_BAN_THRESHOLD = 5;
+const COMPLAINT_REASONS = [
+  "Makanan tidak layak/basi",
+  "Pesanan tidak sesuai pesanan",
+  "Pelayanan mitra kurang baik",
+  "Lainnya",
+];
+// gambar generik per kategori, dipakai untuk paket yang baru dicatat mitra (tayang langsung ke pembeli)
+const CATEGORY_IMG = {
+  "Roti & kue":"https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500&q=80",
+  "Makanan berat":"https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=500&q=80",
+  "Buah & sayur":"https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=500&q=80",
+  "Minuman":"https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500&q=80",
+};
+function imgForCategory(kategori){ return CATEGORY_IMG[kategori] || CATEGORY_IMG["Makanan berat"]; }
+
+/* ---------------- state ---------------- */
+const state = {
+  tab:"home", view:"list", activeCat:"Semua", query:"",
+  selected:null, selectedTierKind:null, tierInfoKind:null, qty:1, cart:[], orders:[], lastOrder:null,
+  mapMode:false, radius:2.5, showPriceInfo:false,
+
+  // pengaturan profil
+  profileSub:null, // null | "address" | "payment" | "notif" | "help"
+  addresses:[
+    {id:1, label:"Rumah", detail:"Jl. Margonda Raya No. 12, Depok"},
+    {id:2, label:"Kantor", detail:"Jl. Juanda No. 45, Depok"},
+  ],
+  activeAddressId:1,
+  paymentMethods:[
+    {id:1, name:"QRIS", detail:"Pindai QR, bisa pakai e-wallet atau m-banking apa saja"},
+    {id:2, name:"Tunai", detail:"Bayar langsung di tempat saat ambil paket"},
+  ],
+  activePaymentId:1,
+  notifSettings:{ nearby:true, priceDrop:true, order:true, promo:false },
+
+  // login (akun Pembeli)
+  auth:{ loggedIn:false, mode:"login", name:"", email:"", password:"", error:"" },
+  profileName:"Rani Anggraini",
+
+  // login (akun Mitra UMKM — terpisah dari akun Pembeli, wajib pakai email berbeda)
+  umkmAuth:{ loggedIn:false, mode:"login", name:"", email:"", password:"", error:"" },
+  umkmProfileEmail:"",
+  umkmTierView:null, // null | "kamu" | "peternak" | "bumi" — detail jalur yang sedang dibuka
+
+  // pembayaran QR
+  qrGrid:null, qrCode:"", qrExpiresAt:0,
+  pendingCode:"", paymentReturnToCart:false,
+
+  // ---- mode Mitra UMKM ----
+  role:"consumer", // "consumer" | "umkm"
+  umkmTab:"dashboard", // "dashboard" | "surplus" | "profile"
+  umkmSurplusList:[
+    {id:1, nama:"Nasi campur sisa jualan", kategori:"Makanan berat", jumlah:6, satuan:"porsi", nilaiSatuan:15000,
+     suhu:"Suhu ruang", jamProduksi:"06.00 – 10.00", higienis:true, dalamBatasWaktu:true, layakPakan:false, waktu:"18 menit lalu", jalur:"kamu"},
+    {id:2, nama:"Sayur layu tidak terjual", kategori:"Buah & sayur", jumlah:4, satuan:"kg", nilaiSatuan:8000,
+     suhu:"Suhu ruang", jamProduksi:"05.00 – 07.00", higienis:false, dalamBatasWaktu:false, layakPakan:true, waktu:"1 jam lalu", jalur:"peternak"},
+    {id:3, nama:"Sisa potongan sayur & kulit buah", kategori:"Buah & sayur", jumlah:2, satuan:"kg", nilaiSatuan:0,
+     suhu:"Suhu ruang", jamProduksi:"05.00 – 07.00", higienis:false, dalamBatasWaktu:false, layakPakan:false, waktu:"2 jam lalu", jalur:"bumi"},
+  ],
+  umkmForm:{ nama:"", kategori:"Makanan berat", jumlah:1, satuan:"porsi", nilaiSatuan:"", suhu:"Suhu ruang", jamProduksi:"", higienis:true, dalamBatasWaktu:true, layakPakan:false },
+
+  // paket "Bagi Kamu" yang baru dicatat mitra & langsung tayang ke pembeli (Surprise Bag baru)
+  liveDeals:[],
+
+  // rating 1 arah: pembeli menilai UMKM setelah pesanan selesai (fondasi untuk rating 2 arah di Kuartal 2)
+  shopRatings:{ "Warung Bu Sari": { sum:1536, count:320 } },
+
+  // moderasi mitra: komplain pembeli -> peringatan otomatis -> suspend -> banned
+  umkmModeration:{ status:"aktif", complaintCount:0 }, // status: "aktif" | "suspend" | "banned"
+  complaints:[], // {id, shopName, code, reason, note, time}
+  complaintTarget:null, // {orderIdx, code, shopName}
+  complaintForm:{ reason:COMPLAINT_REASONS[0], note:"" },
+};
+
+const rp = n => "Rp" + n.toLocaleString("id-ID");
+const ADMIN_FEE = 1500;
+const el = id => document.getElementById(id);
+const svgIcon = (name) => ICONS[name];
+
+const ICONS = {
+  search:'<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>',
+  pin:'<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0116 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+  clock:'<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
+  bag:'<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 8h12l1 12H5L6 8z"/><path d="M9 8a3 3 0 016 0"/></svg>',
+  user:'<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>',
+  back:'<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>',
+  plus:'<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  minus:'<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg>',
+  check:'<svg class="icon" style="width:34px;height:34px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l6 6L20 6"/></svg>',
+  home:'<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9a1 1 0 01-1 1h-4v-6H9v6H5a1 1 0 01-1-1v-9z"/></svg>',
+  receipt:'<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z"/><path d="M9 8h6M9 12h6"/></svg>',
+  leaf:'<svg class="icon" style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 21c9 0 14-5 14-14V5H17C8 5 3 10 3 19v2z"/></svg>',
+  star:'<svg class="icon" style="width:14px;height:14px" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9L12 17.8 5.8 21l1.2-6.9-5-4.9 6.9-1L12 2z"/></svg>',
+  list:'<svg class="icon" style="width:13px;height:13px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
+  map:'<svg class="icon" style="width:13px;height:13px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>',
+  heart:'<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-9.5-8.8C.8 7.6 2.6 4 6.2 4c2 0 3.4 1 4.8 2.7C12.4 5 13.8 4 15.8 4c3.6 0 5.4 3.6 3.7 7.2C19 15.6 12 20 12 20z"/></svg>',
+  bolt:'<svg class="icon" style="width:12px;height:12px" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h7l-1 8 11-14h-8l1-6z"/></svg>',
+  medal:'<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="15" r="6"/><path d="M9 9.5L6 2M15 9.5l3-7.5M12 12v6"/></svg>',
+  chevron:'<svg class="icon" style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>',
+  card:'<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg>',
+  bell:'<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0112 0c0 4 1.5 5.5 2 6.5H4c.5-1 2-2.5 2-6.5z"/><path d="M10 19a2 2 0 004 0"/></svg>',
+  help:'<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 015 .5c0 1.7-2.5 1.7-2.5 3.5"/><path d="M12 17h.01"/></svg>',
+  whatsapp:'<svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15L2 22l5.2-1.4A10 10 0 1012 2zm5.8 14.2c-.2.6-1.4 1.2-1.9 1.3-.5.1-1.1.1-1.8-.1-.4-.1-1-.3-1.7-.6-3-1.3-5-4.3-5.1-4.5-.1-.2-1.2-1.6-1.2-3s.7-2.1 1-2.4c.3-.3.6-.3.8-.3h.6c.2 0 .4 0 .6.5.2.5.8 1.9.9 2 .1.2.1.3 0 .5-.1.2-.1.3-.3.5-.1.2-.3.3-.4.5-.1.2-.3.3-.1.6.2.3.8 1.4 1.8 2.2 1.2 1.1 2.2 1.4 2.5 1.6.3.1.5.1.6-.1.2-.2.7-.8.9-1.1.2-.3.4-.2.6-.1.2.1 1.6.7 1.8.9.2.1.4.2.5.3.1.2.1.9-.1 1.5z"/></svg>',
+  logout:'<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>',
+  cash:'<svg class="icon" style="width:40px;height:40px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 9v0M18 15v0"/></svg>',
+  trash:'<svg class="icon" style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13a2 2 0 002 2h6a2 2 0 002-2l1-13"/><path d="M10 11v6M14 11v6"/></svg>',
+};
+
+/* ---------------- derived data ---------------- */
+function activeAddress(){
+  return state.addresses.find(a => a.id === state.activeAddressId) || state.addresses[0];
+}
+// mitra yang sedang disuspend/dibanned tidak boleh muncul lagi di daftar pembeli
+function shopIsBlocked(shopName){
+  return shopName === UMKM_PROFILE.name && state.umkmModeration.status !== "aktif";
+}
+function categoryMatched(){
+  const allowedIds = dealIdsForAddress(state.activeAddressId);
+  const base = DEALS.filter(d => allowedIds.includes(d.id) && !shopIsBlocked(d.name));
+  // paket yang baru dicatat mitra (jalur "Bagi Kamu") langsung tayang ke semua pembeli,
+  // tidak dibatasi radius alamat, selama akun mitra masih aktif.
+  const live = state.liveDeals.filter(d => !shopIsBlocked(d.name));
+  return base.concat(live).filter(d =>
+    (state.activeCat === "Semua" || d.category === state.activeCat) &&
+    d.name.toLowerCase().includes(state.query.toLowerCase())
+  );
+}
+function filteredDeals(){
+  return categoryMatched().filter(d => d.isLive || parseFloat(d.distance) <= state.radius);
+}
+
+/* ---------------- actions ---------------- */
+function openDetail(id){
+  state.selected = DEALS.find(d => d.id === id) || state.liveDeals.find(d => d.id === id);
+  state.selectedTierKind = null;
+  state.qty = 1;
+  state.view = "detail";
+  render();
+}
+function openTierInfo(tier){ state.tierInfoKind = tier; state.view = "tierInfo"; render(); }
+function closeTierInfo(){ state.view = "list"; render(); }
+function openTierItem(tier, id){
+  state.selected = tierDealPool(tier).find(d => d.id === id);
+  state.selectedTierKind = tier;
+  state.qty = 1;
+  state.view = "tierItemDetail";
+  render();
+}
+function closeTierItemDetail(){
+  state.view = state.tierInfoKind ? "tierInfo" : "list";
+  render();
+}
+function addToCart(){
+  const d = state.selected;
+  const existing = state.cart.find(c => c.id === d.id);
+  if (existing) existing.qty = Math.min(d.left, existing.qty + state.qty);
+  else state.cart.push({...d, qty: state.qty});
+  state.view = "cart";
+  render();
+}
+function incCartItem(id){
+  const item = state.cart.find(c => c.id === id);
+  if (!item) return;
+  item.qty = Math.min(item.left, item.qty + 1);
+  render();
+}
+function decCartItem(id){
+  const item = state.cart.find(c => c.id === id);
+  if (!item) return;
+  if (item.qty <= 1){ removeCartItem(id); return; }
+  item.qty -= 1;
+  render();
+}
+function removeCartItem(id){
+  state.cart = state.cart.filter(c => c.id !== id);
+  render();
+}
+function generateOrderCode(){ return "BR" + Math.floor(1000 + Math.random()*9000); }
+function placeOrder(){
+  const subtotal = state.cart.reduce((s,c)=>s+c.price*c.qty,0);
+  const total = subtotal + ADMIN_FEE;
+  const pay = state.paymentMethods.find(p=>p.id===state.activePaymentId);
+  // Kode pengambilan dibuat per warung: kalau keranjang berisi paket dari beberapa
+  // warung berbeda, tiap warung punya kode sendiri untuk ditunjukkan saat ambil paket.
+  const shopMap = {};
+  state.cart.forEach(c=>{
+    if (!shopMap[c.id]) shopMap[c.id] = { shopId:c.id, shopName:c.name, window:c.window, items:[], code:generateOrderCode() };
+    shopMap[c.id].items.push(c);
+  });
+  const pickups = Object.values(shopMap);
+  // notifikasi urgensi: batas waktu pengambilan tersimulasi per warung, dipakai untuk
+  // menampilkan "tersisa X jam sebelum waktu pengambilan" di halaman Pesananku.
+  pickups.forEach((p,i)=>{ p.deadlineAt = Date.now() + (90 + i*45 + Math.random()*60) * 60000; });
+  const order = {
+    code: state.pendingCode || pickups[0].code, // ref pembayaran
+    items: state.cart, subtotal, adminFee: ADMIN_FEE, total, buyer: state.profileName, payment: pay ? pay.name : "",
+    pickups,
+  };
+  state.orders.unshift(order);
+  state.lastOrder = order;
+  state.cart = [];
+  state.pendingCode = "";
+  state.view = "success";
+  render();
+}
+function goHome(){ state.tab="home"; state.view="list"; render(); }
+function setTab(t){ state.tab=t; state.view="list"; state.profileSub=null; render(); }
+
+/* ---------------- rating 1 arah (pembeli -> UMKM) ---------------- */
+function rateShopOrder(orderIdx, code, stars){
+  const o = state.orders[orderIdx];
+  if (!o) return;
+  const p = (o.pickups||[]).find(pk => pk.code === code);
+  if (!p || p.myRating) return;
+  p.myRating = stars;
+  const r = state.shopRatings[p.shopName] || (state.shopRatings[p.shopName] = { sum:0, count:0 });
+  r.sum += stars; r.count += 1;
+  render();
+}
+
+/* ---------------- komplain, suspend, banned ---------------- */
+function openComplaint(orderIdx, code){
+  const o = state.orders[orderIdx];
+  const p = o && (o.pickups||[]).find(pk => pk.code === code);
+  if (!p) return;
+  state.complaintTarget = { orderIdx, code, shopName: p.shopName };
+  state.complaintForm = { reason: COMPLAINT_REASONS[0], note:"" };
+  state.view = "complaint";
+  render();
+}
+function closeComplaint(){ state.complaintTarget = null; state.view = "orders"; state.tab = "orders"; render(); }
+function updateComplaintForm(key, val){ state.complaintForm[key] = val; render(); }
+function submitComplaint(){
+  const t = state.complaintTarget;
+  if (!t) return;
+  const f = state.complaintForm;
+  const complaint = {
+    id: Date.now(), shopName: t.shopName, code: t.code,
+    reason: f.reason, note: f.note.trim(), time:"Baru saja", status:"Diproses",
+  };
+  state.complaints.unshift(complaint);
+  // tandai pesanan ini supaya tidak dilaporkan berkali-kali
+  const o = state.orders[t.orderIdx];
+  const p = o && (o.pickups||[]).find(pk => pk.code === t.code);
+  if (p) p.complained = true;
+  // eskalasi otomatis: komplain menumpuk -> suspend -> banned (khusus mitra yang dilaporkan)
+  if (t.shopName === UMKM_PROFILE.name){
+    const m = state.umkmModeration;
+    m.complaintCount += 1;
+    if (m.complaintCount >= COMPLAINT_BAN_THRESHOLD) m.status = "banned";
+    else if (m.complaintCount >= COMPLAINT_SUSPEND_THRESHOLD) m.status = "suspend";
+    if (m.status !== "aktif"){
+      // paket yang sedang tayang dari mitra ini langsung ditarik dari daftar pembeli
+      state.liveDeals = state.liveDeals.filter(d => d.name !== t.shopName);
+    }
+  }
+  state.complaintTarget = null;
+  state.view = "orders";
+  state.tab = "orders";
+  alert("Laporan terkirim. Tim Bagi Rasa akan meninjau dalam 1x24 jam.");
+  render();
+}
+function complaintHTML(){
+  const t = state.complaintTarget;
+  const f = state.complaintForm;
+  if (!t) return `<div class="empty-state">Tidak ada laporan yang sedang dibuat.</div>`;
+  return `
+    <h2 class="section-title">Laporkan Pesanan</h2>
+    <div class="jalur-hint"><span>Melaporkan pesanan dari <strong>${t.shopName}</strong> · kode ${t.code}</span></div>
+    <div class="form-row">
+      <label>Jenis masalah</label>
+      <select onchange="updateComplaintForm('reason', this.value)">
+        ${COMPLAINT_REASONS.map(r=>`<option ${f.reason===r?'selected':''}>${r}</option>`).join("")}
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Ceritakan detailnya (opsional)</label>
+      <textarea id="complaintNoteInput" class="complaint-note" placeholder="Jelaskan kejadiannya biar tim kami bisa tindak lanjuti...">${f.note}</textarea>
+    </div>
+    <button class="btn btn-orange" onclick="submitComplaint()">Kirim laporan</button>
+    <button class="qr-cancel" onclick="closeComplaint()">Batalkan</button>
+  `;
+}
+
+/* ---------------- mode Mitra UMKM ---------------- */
+function switchToUmkm(){
+  state.role="umkm";
+  if (state.umkmAuth.loggedIn) state.umkmTab="dashboard";
+  render();
+}
+function switchToConsumer(){ state.role="consumer"; state.tab="home"; state.view="list"; render(); }
+function setUmkmTab(t){ state.umkmTab=t; state.umkmTierView=null; render(); }
+function updateUmkmForm(key, val){ state.umkmForm[key] = val; render(); }
+function openTierDetail(tier){ state.umkmTierView = tier; render(); }
+function closeTierDetail(){ state.umkmTierView = null; render(); }
+
+/* akun Mitra UMKM terpisah dari akun Pembeli (email login harus berbeda) */
+function setUmkmAuthMode(m){ state.umkmAuth.mode = m; state.umkmAuth.error = ""; render(); }
+function submitMitraAuth(){
+  const a = state.umkmAuth;
+  if (a.mode==="register" && !a.name.trim()){ a.error = "Nama usaha/pemilik tidak boleh kosong."; render(); return; }
+  if (!validateEmail(a.email)){ a.error = "Format email belum valid."; render(); return; }
+  if (a.password.length < 6){ a.error = "Kata sandi minimal 6 karakter."; render(); return; }
+  if (state.auth.loggedIn && state.auth.email && a.email.trim().toLowerCase() === state.auth.email.trim().toLowerCase()){
+    a.error = "Email ini sedang dipakai akun Pembeli. Akun Mitra UMKM wajib pakai Gmail lain.";
+    render(); return;
+  }
+  a.error = "";
+  a.loggedIn = true;
+  state.umkmProfileEmail = a.email;
+  state.umkmTab = "dashboard";
+  render();
+}
+function logoutMitra(){
+  state.umkmAuth = { loggedIn:false, mode:"login", name:"", email:"", password:"", error:"" };
+  state.umkmProfileEmail = "";
+  switchToConsumer();
+}
+
+function submitUmkmSurplus(){
+  if (state.umkmModeration.status !== "aktif"){
+    alert(state.umkmModeration.status === "banned"
+      ? "Akun mitra ini sedang diblokir permanen sehingga tidak bisa mencatat surplus baru."
+      : "Akun mitra ini sedang disuspend sementara sehingga tidak bisa mencatat surplus baru.");
+    return;
+  }
+  const f = state.umkmForm;
+  if (!f.nama.trim()){ alert("Nama makanan surplus belum diisi."); return; }
+  if (!f.jamProduksi.trim()){ alert("Jam produksi belum diisi."); return; }
+  const jalur = tentukanJalur(f);
+  const item = {
+    id: Date.now(), nama: f.nama.trim(), kategori: f.kategori,
+    jumlah: Math.max(1, Number(f.jumlah)||1), satuan: f.satuan,
+    nilaiSatuan: Number(f.nilaiSatuan)||0, suhu: f.suhu, jamProduksi: f.jamProduksi.trim(),
+    higienis: f.higienis, dalamBatasWaktu: f.dalamBatasWaktu, layakPakan: f.layakPakan,
+    waktu:"Baru saja", jalur,
+  };
+  state.umkmSurplusList.unshift(item);
+  // jalur "Bagi Kamu" = layak & aman untuk manusia -> langsung tayang ke pembeli sbg Surprise Bag baru
+  if (jalur === "kamu") pushLiveDealFromSurplus(item);
+  state.umkmForm = { nama:"", kategori:"Makanan berat", jumlah:1, satuan:"porsi", nilaiSatuan:"", suhu:"Suhu ruang", jamProduksi:"", higienis:true, dalamBatasWaktu:true, layakPakan:false };
+  state.umkmTab = "surplus";
+  render();
+}
+
+// mengubah catatan surplus mitra (jalur Bagi Kamu) menjadi paket Surprise Bag yang langsung
+// muncul di daftar pembeli, lengkap dengan jam produksi & harga yang ikut algoritma Harga Kejutan.
+function pushLiveDealFromSurplus(item){
+  const price = item.nilaiSatuan > 0 ? item.nilaiSatuan : 8000;
+  const deal = {
+    id: item.id, name: UMKM_PROFILE.name, category: item.kategori, distance:"0.6 km",
+    old: price, price, left: item.jumlah, window: item.jamProduksi,
+    img: imgForCategory(item.kategori),
+    desc: `${item.nama} — surplus baru dari ${UMKM_PROFILE.name}, tayang otomatis lewat Harga Kejutan.`,
+    dish: item.nama, jamProduksi: item.jamProduksi, isLive: true,
+  };
+  deal.endsAt = Date.now() + (4 + Math.random()*8) * 60000;
+  state.liveDeals.unshift(deal);
+}
+
+function umkmTierTotals(){
+  const totals = { kamu:0, peternak:0, bumi:0 };
+  state.umkmSurplusList.forEach(it => { totals[it.jalur] += it.jumlah; });
+  return totals;
+}
+
+function umkmKPI(){
+  const list = state.umkmSurplusList;
+  const totalUnit = list.reduce((s,i)=>s+i.jumlah,0) || 1;
+  const kamuUnit = list.filter(i=>i.jalur==="kamu").reduce((s,i)=>s+i.jumlah,0);
+  const nilaiEkonomi = list.filter(i=>i.jalur==="kamu").reduce((s,i)=>s+i.jumlah*i.nilaiSatuan,0);
+  const nonLimbahUnit = list.filter(i=>i.jalur!=="bumi" || false).reduce((s,i)=> i.jalur!=="bumi" ? s+i.jumlah : s, 0);
+  // "tidak menjadi limbah" = tersalurkan lewat Bagi Kamu ATAU Bagi Peternak (masih termanfaatkan),
+  // hanya Bagi Bumi yang dihitung sebagai jalur akhir/limbah terkelola.
+  const persenNonLimbah = Math.round(((totalUnit - list.filter(i=>i.jalur==="bumi").reduce((s,i)=>s+i.jumlah,0)) / totalUnit) * 100);
+  return {
+    porsiTerjual: kamuUnit,
+    nilaiEkonomi,
+    persenNonLimbah,
+    umkmAktif: 128,
+  };
+}
+
+// banner status moderasi mitra: aktif / disuspend / dibanned akibat komplain pembeli
+function moderationBannerHTML(){
+  const m = state.umkmModeration;
+  if (m.status === "suspend"){
+    return `<div class="mod-banner suspend"><strong>Akun disuspend sementara</strong>Sudah ada ${m.complaintCount} komplain pembeli. Kamu tidak bisa mencatat surplus baru sampai tim Bagi Rasa selesai meninjau.</div>`;
+  }
+  if (m.status === "banned"){
+    return `<div class="mod-banner banned"><strong>Akun diblokir permanen</strong>Akun ini diblokir karena komplain berulang (${m.complaintCount} laporan). Hubungi tim Bagi Rasa lewat Bantuan untuk pengajuan banding.</div>`;
+  }
+  return "";
+}
+function umkmDashboardHTML(){
+  if (state.umkmTierView) return umkmTierDetailHTML(state.umkmTierView);
+  const totals = umkmTierTotals();
+  const totalAll = totals.kamu + totals.peternak + totals.bumi || 1;
+  const pctKamu = Math.round(totals.kamu/totalAll*100);
+  const pctPeternak = Math.round(totals.peternak/totalAll*100);
+  const pctBumi = 100 - pctKamu - pctPeternak;
+  const kpi = umkmKPI();
+  const rating = shopRatingInfo(UMKM_PROFILE.name);
+  return `
+    <div class="role-banner">
+      <div><strong>${UMKM_PROFILE.name}</strong><span>Mode Mitra UMKM · ${UMKM_PROFILE.category}</span></div>
+      <button onclick="switchToConsumer()">Mode Pembeli</button>
+    </div>
+    ${moderationBannerHTML()}
+    <h2 class="section-title">Dashboard Surplus</h2>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="num">${kpi.porsiTerjual}</div><div class="lbl">Porsi terjual via Bagi Kamu</div></div>
+      <div class="kpi-card"><div class="num">${rp(kpi.nilaiEkonomi)}</div><div class="lbl">Nilai ekonomi diselamatkan</div></div>
+      <div class="kpi-card"><div class="num">${kpi.persenNonLimbah}%</div><div class="lbl">Surplus tidak jadi limbah</div></div>
+      <div class="kpi-card"><div class="num">${state.umkmSurplusList.length}</div><div class="lbl">Item surplus tercatat hari ini</div></div>
+    </div>
+    <div class="section-sub">Rating dari pembeli</div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="num">${rating.avg===null?'-':rating.avg.toFixed(1)}</div><div class="lbl">Rata-rata rating (1 arah)</div></div>
+      <div class="kpi-card"><div class="num">${rating.count}</div><div class="lbl">Total pembeli memberi rating</div></div>
+    </div>
+    <div class="roadmap-card">
+      <span class="roadmap-badge">Segera · K2</span>
+      <p>Saat ini rating masih 1 arah (pembeli menilai mitra). Fitur rating 2 arah — mitra juga bisa menilai pembeli — direncanakan hadir di Kuartal 2.</p>
+    </div>
+    <div class="section-sub">Distribusi 3 jalur pemanfaatan hari ini · pencet untuk detail</div>
+    <div class="tier-bar">
+      ${pctKamu>0?`<div style="width:${pctKamu}%; background:${TIER_INFO.kamu.color}" onclick="openTierDetail('kamu')"></div>`:``}
+      ${pctPeternak>0?`<div style="width:${pctPeternak}%; background:${TIER_INFO.peternak.color}" onclick="openTierDetail('peternak')"></div>`:``}
+      ${pctBumi>0?`<div style="width:${pctBumi}%; background:${TIER_INFO.bumi.color}" onclick="openTierDetail('bumi')"></div>`:``}
+    </div>
+    <div class="settings-list" style="margin-bottom:18px">
+      <button onclick="openTierDetail('kamu')">
+        <span><span class="dot" style="background:${TIER_INFO.kamu.color}; margin-right:7px;"></span>Bagi Kamu<span class="settings-sub">${pctKamu}% dari total surplus hari ini</span></span>
+        <span class="chev">${ICONS.chevron}</span>
+      </button>
+      <button onclick="openTierDetail('peternak')">
+        <span><span class="dot" style="background:${TIER_INFO.peternak.color}; margin-right:7px;"></span>Bagi Peternak<span class="settings-sub">${pctPeternak}% dari total surplus hari ini</span></span>
+        <span class="chev">${ICONS.chevron}</span>
+      </button>
+      <button onclick="openTierDetail('bumi')">
+        <span><span class="dot" style="background:${TIER_INFO.bumi.color}; margin-right:7px;"></span>Bagi Bumi<span class="settings-sub">${pctBumi}% dari total surplus hari ini</span></span>
+        <span class="chev">${ICONS.chevron}</span>
+      </button>
+    </div>
+    <div class="section-sub">Mitra penyaluran</div>
+    ${MITRA_PENYALURAN.map(m=>`
+      <div class="mitra-card">
+        <div class="mitra-icon" style="background:${TIER_INFO[m.tier].color}">${ICONS.leaf}</div>
+        <div class="mitra-info"><strong>${m.nama}</strong><span>${m.jenis} · ${m.jadwal}</span></div>
+      </div>`).join("")}
+    <button class="btn btn-green" style="margin-top:8px" onclick="setUmkmTab('surplus')" ${state.umkmModeration.status!=="aktif"?'disabled':''}>Catat surplus baru</button>
+  `;
+}
+
+function umkmTierDetailHTML(tier){
+  const info = TIER_INFO[tier];
+  const items = state.umkmSurplusList.filter(i=>i.jalur===tier);
+  const totalUnit = items.reduce((s,i)=>s+i.jumlah,0);
+  const totals = umkmTierTotals();
+  const totalAll = totals.kamu + totals.peternak + totals.bumi || 1;
+  const pct = Math.round(totals[tier]/totalAll*100);
+  const kpi = umkmKPI();
+  const mitra = MITRA_PENYALURAN.filter(m=>m.tier===tier);
+  return `
+    <h2 class="section-title">${info.label}</h2>
+    <div class="tier-detail-head" style="border-left:5px solid ${info.color}">
+      <span class="tier-badge ${tier}">${info.label}</span>
+      <p>${info.desc}</p>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="num">${totalUnit}</div><div class="lbl">Unit surplus hari ini</div></div>
+      <div class="kpi-card"><div class="num">${pct}%</div><div class="lbl">Porsi dari total surplus</div></div>
+      ${tier==="kamu" ? `<div class="kpi-card"><div class="num">${rp(kpi.nilaiEkonomi)}</div><div class="lbl">Nilai ekonomi diselamatkan</div></div>` : `<div class="kpi-card"><div class="num">${mitra.length}</div><div class="lbl">Mitra penyaluran aktif</div></div>`}
+    </div>
+    ${tier==="kamu" ? `
+      <div class="section-sub">Cara penyalurannya</div>
+      <div class="mitra-card"><div class="mitra-icon" style="background:${info.color}">${ICONS.bag}</div>
+        <div class="mitra-info"><strong>Harga Kejutan</strong><span>Otomatis tayang sebagai Surprise Bag untuk dibeli konsumen sebelum masa simpannya habis.</span></div>
+      </div>
+    ` : `
+      <div class="section-sub">Mitra penyaluran ${info.label.toLowerCase()}</div>
+      ${mitra.length===0 ? `<div class="empty-state">Belum ada mitra untuk jalur ini.</div>` : mitra.map(m=>`
+      <div class="mitra-card">
+        <div class="mitra-icon" style="background:${info.color}">${ICONS.leaf}</div>
+        <div class="mitra-info"><strong>${m.nama}</strong><span>${m.jenis} · ${m.jadwal}</span></div>
+      </div>`).join("")}
+    `}
+    <div class="section-sub">Item di jalur ini hari ini</div>
+    ${items.length===0 ? `<div class="empty-state">Belum ada surplus di jalur ini hari ini.</div>` : items.map(it=>`
+      <div class="umkm-item-card">
+        <div class="umkm-item-top">
+          <div class="umkm-item-name">${it.nama}</div>
+          <span class="tier-badge ${it.jalur}">${it.jumlah} ${it.satuan}</span>
+        </div>
+        <div class="umkm-item-meta">${it.kategori} · ${it.suhu}${it.jamProduksi ? ' · Produksi '+it.jamProduksi : ''} · dicatat ${it.waktu}</div>
+      </div>`).join("")}
+  `;
+}
+
+function umkmSurplusHTML(){
+  const f = state.umkmForm;
+  const previewJalur = tentukanJalur(f);
+  const blocked = state.umkmModeration.status !== "aktif";
+  return `
+    <h2 class="section-title">Catat Surplus</h2>
+    ${moderationBannerHTML()}
+    ${blocked ? `<p style="font-size:0.82rem; color:var(--ink-soft); margin-bottom:16px">Form pencatatan surplus dinonaktifkan sementara sampai status akun kembali aktif.</p>` : ``}
+    <div class="form-row">
+      <label>Nama makanan surplus</label>
+      <input id="umkmNamaInput" type="text" value="${f.nama}" placeholder="cth. Nasi campur sisa jualan" ${blocked?'disabled':''}>
+    </div>
+    <div class="form-row-2">
+      <div class="form-row">
+        <label>Kategori</label>
+        <select onchange="updateUmkmForm('kategori', this.value)">
+          ${CATEGORIES.filter(c=>c!=="Semua").map(c=>`<option ${f.kategori===c?'selected':''}>${c}</option>`).join("")}
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Satuan</label>
+        <select onchange="updateUmkmForm('satuan', this.value)">
+          ${["porsi","kg","paket"].map(s=>`<option ${f.satuan===s?'selected':''}>${s}</option>`).join("")}
+        </select>
+      </div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-row">
+        <label>Jumlah</label>
+        <input id="umkmJumlahInput" type="number" min="1" value="${f.jumlah}">
+      </div>
+      <div class="form-row">
+        <label>Nilai per satuan (Rp)</label>
+        <input id="umkmNilaiInput" type="number" min="0" value="${f.nilaiSatuan}" placeholder="cth. 15000">
+      </div>
+    </div>
+    <div class="form-row">
+      <label>Kondisi penyimpanan</label>
+      <select onchange="updateUmkmForm('suhu', this.value)" ${blocked?'disabled':''}>
+        ${["Suhu ruang","Dingin (kulkas)","Beku (freezer)","Hangat/tertutup"].map(s=>`<option ${f.suhu===s?'selected':''}>${s}</option>`).join("")}
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Jam produksi</label>
+      <input id="umkmJamProduksiInput" type="text" value="${f.jamProduksi}" placeholder="cth. 06.00 – 10.00" ${blocked?'disabled':''}>
+    </div>
+    <div class="section-sub" style="margin-top:6px">Cek keamanan pangan (mekanisme seleksi jalur)</div>
+    <label class="checklist-row">
+      <input type="checkbox" ${f.higienis?'checked':''} onchange="updateUmkmForm('higienis', this.checked)" ${blocked?'disabled':''}>
+      <span><strong>Higienis & masih layak dikonsumsi manusia</strong><span>Disimpan sesuai suhu, tidak terkontaminasi, dan diproses hari ini.</span></span>
+    </label>
+    <label class="checklist-row">
+      <input type="checkbox" ${f.dalamBatasWaktu?'checked':''} onchange="updateUmkmForm('dalamBatasWaktu', this.checked)" ${blocked?'disabled':''}>
+      <span><strong>Masih dalam batas waktu simpan aman</strong><span>Belum melewati batas waktu konsumsi sejak diproses/dipajang.</span></span>
+    </label>
+    <label class="checklist-row">
+      <input type="checkbox" ${f.layakPakan?'checked':''} onchange="updateUmkmForm('layakPakan', this.checked)" ${blocked?'disabled':''}>
+      <span><strong>Aman dijadikan pakan ternak</strong><span>Dicentang jika 2 syarat di atas tidak terpenuhi, tapi masih aman untuk hewan.</span></span>
+    </label>
+    <div class="jalur-hint">
+      <span class="tier-badge ${previewJalur}">${TIER_INFO[previewJalur].label}</span>
+      <span>${TIER_INFO[previewJalur].desc}</span>
+    </div>
+    <button class="btn btn-green" onclick="submitUmkmSurplus()" ${blocked?'disabled':''}>Simpan & tentukan jalur</button>
+
+    <div class="section-sub">Surplus tercatat hari ini</div>
+    ${state.umkmSurplusList.length===0 ? `<div class="empty-state">Belum ada surplus dicatat hari ini.</div>` :
+    state.umkmSurplusList.map(it=>`
+      <div class="umkm-item-card">
+        <div class="umkm-item-top">
+          <div class="umkm-item-name">${it.nama}</div>
+          <span class="tier-badge ${it.jalur}">${TIER_INFO[it.jalur].label}</span>
+        </div>
+        <div class="umkm-item-meta">${it.jumlah} ${it.satuan} · ${it.kategori} · ${it.suhu}${it.jamProduksi ? ' · Produksi '+it.jamProduksi : ''} · dicatat ${it.waktu}</div>
+      </div>`).join("")}
+  `;
+}
+
+function umkmProfileHTML(){
+  const m = state.umkmModeration;
+  const rating = shopRatingInfo(UMKM_PROFILE.name);
+  const myComplaints = state.complaints.filter(c => c.shopName === UMKM_PROFILE.name);
+  return `
+    <h2 class="section-title">Profil Mitra</h2>
+    <div class="profile-card">
+      <div class="avatar">${initials(UMKM_PROFILE.name)}</div>
+      <div><div style="font-weight:800">${UMKM_PROFILE.name}</div><div style="font-size:0.78rem; color:var(--ink-soft)">${UMKM_PROFILE.address}</div></div>
+    </div>
+    <div class="settings-list">
+      <div><span>${ICONS.user} Akun login Mitra<span class="settings-sub">${state.umkmProfileEmail || "-"} · terpisah dari akun Pembeli</span></span></div>
+      <div><span>${ICONS.pin} Alamat usaha<span class="settings-sub">${UMKM_PROFILE.address}</span></span></div>
+      <div><span>${ICONS.bag} Kategori usaha<span class="settings-sub">${UMKM_PROFILE.category}</span></span></div>
+      <div><span>${ICONS.star} Rating pembeli<span class="settings-sub">${rating.avg===null?'Belum ada rating':`${rating.avg.toFixed(1)} dari ${rating.count} pembeli`}</span></span></div>
+      <div><span>${ICONS.help} Status akun<span class="settings-sub"><span class="status-chip ${m.status}">${m.status==="aktif"?"Aktif":m.status==="suspend"?"Disuspend":"Diblokir"}</span> · ${m.complaintCount} komplain masuk</span></span></div>
+    </div>
+    ${moderationBannerHTML()}
+    <div class="section-sub">Riwayat komplain</div>
+    ${myComplaints.length===0 ? `<div class="empty-state">Belum ada komplain masuk.</div>` : myComplaints.map(c=>`
+      <div class="complaint-item">
+        <div class="c-top"><span>${c.code}</span><span style="color:var(--ink-soft)">${c.time}</span></div>
+        <div class="c-reason">${c.reason}</div>
+        ${c.note ? `<div class="c-note">"${c.note}"</div>` : ``}
+      </div>`).join("")}
+    <button class="role-switch-link" onclick="switchToConsumer()">Kembali ke mode Pembeli</button>
+    <button class="logout-btn" onclick="logoutMitra()">${ICONS.logout} Keluar dari akun Mitra</button>
+  `;
+}
+
+function umkmBodyHTML(){
+  if (state.umkmTab==="surplus") return umkmSurplusHTML();
+  if (state.umkmTab==="profile") return umkmProfileHTML();
+  return umkmDashboardHTML();
+}
+
+function umkmBottomNavHTML(){
+  const items = [
+    {key:"dashboard", label:"Dashboard", icon:ICONS.home},
+    {key:"surplus", label:"Surplus", icon:ICONS.leaf},
+    {key:"profile", label:"Profil", icon:ICONS.user},
+  ];
+  return `<div class="bottom-nav">
+    ${items.map(i=>`<button class="nav-btn ${state.umkmTab===i.key?'active':''}" onclick="setUmkmTab('${i.key}')">${i.icon}<span>${i.label}</span></button>`).join("")}
+  </div>`;
+}
+
+/* ---------------- profile settings actions ---------------- */
+function openProfileSub(sub){ state.profileSub = sub; render(); }
+function closeProfileSub(){ state.profileSub = null; render(); }
+
+function selectAddress(id){
+  state.activeAddressId = id;
+  state.tab = "home"; state.view = "list"; state.profileSub = null;
+  render();
+}
+function addAddress(){
+  const label = prompt("Nama alamat (contoh: Rumah, Kantor)");
+  if (!label) return;
+  const detail = prompt("Detail alamat lengkap");
+  if (!detail) return;
+  const id = Date.now();
+  state.addresses.push({id, label, detail});
+  state.activeAddressId = id;
+  state.tab = "home"; state.view = "list"; state.profileSub = null;
+  render();
+}
+
+function selectPayment(id){
+  state.activePaymentId = id;
+  if (state.paymentReturnToCart){
+    state.paymentReturnToCart = false;
+    state.tab = "home"; state.view = "cart"; state.profileSub = null;
+  }
+  render();
+}
+function goToPaymentSettings(){
+  state.paymentReturnToCart = true;
+  state.tab = "profile"; state.view = "list"; state.profileSub = "payment";
+  render();
+}
+function goToAddressSettings(){
+  state.tab = "profile"; state.view = "list"; state.profileSub = "address";
+  render();
+}
+
+function toggleNotif(key){ state.notifSettings[key] = !state.notifSettings[key]; render(); }
+
+/* ---------------- notifikasi urgensi pengambilan pesanan ---------------- */
+function pickupUrgencyInfo(deadlineAt){
+  const ms = deadlineAt - Date.now();
+  if (ms <= 0) return { text:"Waktu pengambilan sudah lewat", cls:"expired" };
+  const totalMin = Math.floor(ms/60000);
+  const h = Math.floor(totalMin/60), m = totalMin%60;
+  const label = h > 0 ? `${h} jam ${m} menit` : `${m} menit`;
+  const hot = totalMin <= 120;
+  return { text:`Tersisa ${label} sebelum waktu pengambilan`, cls: hot ? "hot" : "" };
+}
+
+/* ---------------- render helpers ---------------- */
+function tierDealCardHTML(d, tier){
+  const info = TIER_INFO[tier];
+  const tag = tier==="peternak" ? "Pakan Ternak" : "Bahan Kompos";
+  return `
+  <button class="deal-card" onclick="openTierItem('${tier}', ${d.id})">
+    <img src="${d.img}" alt="${d.name}">
+    <div class="deal-info">
+      <div class="sbag-tag" style="background:${info.color}1f; color:${info.color}">${ICONS.leaf} ${tag}</div>
+      <div class="deal-cat">${d.category} · ${d.distance}</div>
+      <div class="deal-name">${d.name}</div>
+      <div class="deal-time">${ICONS.clock} Ambil ${d.window}</div>
+      <div class="deal-foot">
+        <span class="price-new">${rp(d.price)}</span>
+        <span class="stock-pill" style="background:${d.left<=2?'var(--orange)':'var(--leaf)'}">${d.left} tersisa</span>
+      </div>
+    </div>
+  </button>`;
+}
+
+function tierItemDetailHTML(){
+  const d = state.selected;
+  const tier = state.selectedTierKind;
+  const info = TIER_INFO[tier];
+  const tag = tier==="peternak" ? "Pakan Ternak" : "Bahan Kompos/Biokonversi";
+  return `
+    <img class="detail-img" src="${d.img}" alt="${d.name}">
+    <div class="sbag-tag" style="background:${info.color}1f; color:${info.color}">${ICONS.leaf} ${tag}</div>
+    <div class="detail-cat">${d.category} · ${d.distance}</div>
+    <h2 class="detail-name display">${d.name}</h2>
+    <p class="detail-desc">${d.desc}</p>
+    <div class="pickup-box">
+      ${ICONS.clock}
+      <div><small>Jam pengambilan</small><strong>Hari ini, ${d.window}</strong></div>
+    </div>
+    <div class="price-qty-row">
+      <div><div class="price-big">${rp(d.price)}</div></div>
+      <div class="qty-stepper">
+        <button onclick="changeQty(-1)">${ICONS.minus}</button>
+        <span>${state.qty}</span>
+        <button onclick="changeQty(1)">${ICONS.plus}</button>
+      </div>
+    </div>
+    <button class="btn btn-green" onclick="addToCart()">Masukkan keranjang · ${rp(d.price*state.qty)}</button>
+    <p style="text-align:center; font-size:0.72rem; color:var(--ink-soft); margin-top:10px">${tier==="peternak" ? "Cocok untuk kamu yang punya ternak/hewan peliharaan." : "Cocok untuk kamu yang berkebun atau butuh bahan kompos."}</p>
+  `;
+}
+
+function dealCardHTML(d){
+  const cp = currentPrice(d);
+  const hot = isHot(d);
+  return `
+  <button class="deal-card" onclick="openDetail(${d.id})">
+    <img src="${d.img}" alt="${d.name}">
+    <div class="deal-info">
+      <div class="sbag-tag">${ICONS.bag} Surprise Bag${d.isLive ? ` · Baru` : ``}</div>
+      <div class="deal-cat">${d.category} · ${d.distance}</div>
+      <div class="deal-name">${d.name}</div>
+      ${d.dish ? `<div class="deal-time">${d.dish}</div>` : ``}
+      <div class="deal-time">${ICONS.clock} Ambil ${d.window}${d.jamProduksi ? ` · Produksi ${d.jamProduksi}` : ``}</div>
+      <div class="urgency-badge ${hot?'hot':''}" id="urg-${d.id}">${ICONS.bolt} Harga naik lagi ${urgencyLabel(d)}</div>
+      <div class="deal-foot">
+        <div><span class="price-old">${rp(d.old)}</span><span class="price-new" id="price-${d.id}">${rp(cp)}</span></div>
+        <span class="stock-pill" style="background:${d.left<=2?C.orange:C.leaf}">${d.left} tersisa</span>
+      </div>
+    </div>
+  </button>`;
+}
+
+/* ---------------- Peta GPS live (Leaflet + OpenStreetMap) ---------------- */
+const LM = {
+  map:null, host:null, watchId:null, follow:true,
+  mode:'gps',                                   // 'gps' = pusat di posisi saya, 'search' = pusat di lokasi hasil cari
+  anchor:{lat:-6.3690, lng:106.8330}, place:'', // titik pusat radius (default: Margonda, Depok)
+  gps:null, err:null, q:'', results:[], msg:'',
+  lastKey:null, lastRadius:null
+};
+const lmEsc = t => String(t).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const lmIsIn = d => d.isLive || parseFloat(d.distance) <= state.radius;
+
+// posisi toko: pakai d.lat/d.lng bila ada, jika tidak diletakkan di sekitar titik pusat sesuai jarak & arah
+function lmDealPos(d){
+  if (d.lat != null && d.lng != null) return [d.lat, d.lng];
+  const km = parseFloat(d.distance) || 1;
+  const b = ((ANGLE[d.id] !== undefined ? ANGLE[d.id] : (d.id*47)%360) * Math.PI) / 180;
+  const a = LM.anchor;
+  return [a.lat + (km*Math.cos(b))/111.32, a.lng + (km*Math.sin(b))/(111.32*Math.cos(a.lat*Math.PI/180))];
+}
+
+function lmInit(){
+  if (LM.map) return;
+  LM.host = document.createElement('div'); LM.host.id = 'liveMapHost';
+  LM.map = L.map(LM.host, {zoomControl:false}).setView([LM.anchor.lat, LM.anchor.lng], 14);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap'}).addTo(LM.map);
+  L.control.zoom({position:'bottomright'}).addTo(LM.map);
+  LM.shops = L.layerGroup().addTo(LM.map);
+  LM.map.on('dragstart', () => { LM.follow = false; });
+}
+
+// dipanggil di akhir setiap render(): pasang peta ke slot, atau matikan GPS bila peta tidak tampil
+function lmSync(){
+  const slot = el('liveMapSlot');
+  if (!slot){ lmStopWatch(); return; }
+  if (typeof L === 'undefined'){ slot.insertAdjacentHTML('beforeend','<div style="padding:40px 20px;text-align:center;font-size:0.82rem;color:var(--ink-soft)">Peta gagal dimuat. Periksa koneksi internet.</div>'); return; }
+  lmInit();
+  slot.appendChild(LM.host);
+  LM.map.invalidateSize();
+  lmDraw();
+  lmStartWatch();
+}
+
+function lmDraw(){
+  const m = LM.map, a = LM.anchor;
+  LM.shops.clearLayers();
+  categoryMatched().forEach(d => {
+    const icon = L.divIcon({className:'', html:`<div class="lm-pin ${lmIsIn(d)?'in':'out'}">${d.left}</div>`, iconSize:[30,30], iconAnchor:[15,15]});
+    L.marker(lmDealPos(d), {icon}).addTo(LM.shops)
+      .bindTooltip(`${lmEsc(d.name)} · ${lmEsc(d.distance||'')} · ${d.left} tersisa`)
+      .on('click', () => openDetail(d.id));
+  });
+  if (LM.circle) LM.circle.remove();
+  LM.circle = L.circle([a.lat,a.lng], {radius:state.radius*1000, color:C.leaf, weight:1.5, fillColor:C.leaf, fillOpacity:0.12, interactive:false}).addTo(m);
+  if (LM.flag){ LM.flag.remove(); LM.flag = null; }
+  if (LM.mode === 'search'){
+    LM.flag = L.marker([a.lat,a.lng], {icon:L.divIcon({className:'', html:'<div class="lm-flag"></div>', iconSize:[26,26], iconAnchor:[13,26]})}).addTo(m).bindTooltip(lmEsc(LM.place));
+  }
+  lmDrawUser();
+  const key = a.lat+','+a.lng;
+  if (LM.lastKey !== key || LM.lastRadius !== state.radius){
+    m.fitBounds(LM.circle.getBounds(), {animate:false, padding:[12,12]});
+    LM.lastKey = key; LM.lastRadius = state.radius;
+  }
+}
+
+function lmDrawUser(){
+  const g = LM.gps; if (!g || !LM.map) return;
+  const ll = [g.lat, g.lng];
+  if (!LM.me){
+    LM.me = L.marker(ll, {icon:L.divIcon({className:'', html:'<div class="lm-me"></div>', iconSize:[22,22], iconAnchor:[11,11]}), zIndexOffset:1000}).addTo(LM.map).bindTooltip('Posisi kamu');
+    LM.acc = L.circle(ll, {radius:g.acc, color:'#2f80ed', weight:1, fillOpacity:0.12, interactive:false}).addTo(LM.map);
+  } else { LM.me.setLatLng(ll); LM.acc.setLatLng(ll).setRadius(g.acc); }
+}
+
+/* --- GPS live --- */
+function lmOnFix(lat, lng, acc, approx){
+  const first = !LM.gps || LM.approx;            // fix akurat pertama menggantikan lokasi perkiraan
+  LM.gps = {lat, lng, acc}; LM.approx = !!approx;
+  if (!approx) LM.err = null;
+  if (first && LM.mode === 'gps' && LM.map && el('liveMapSlot')){ LM.anchor = {lat, lng}; lmDraw(); }
+  else lmDrawUser();
+  if (!approx && LM.follow && LM.mode === 'gps' && LM.map) LM.map.panTo([lat, lng]);
+  lmUpdateStatus();
+}
+function lmStartWatch(){
+  if (LM.watchId !== null) return;
+  if (!navigator.geolocation){ LM.err = 'Browser ini tidak mendukung GPS.'; lmIpFallback(); lmUpdateStatus(); return; }
+  LM.watchId = navigator.geolocation.watchPosition(
+    p => lmOnFix(p.coords.latitude, p.coords.longitude, p.coords.accuracy, false),
+    e => {
+      LM.err = e.code === 1 ? 'Izin lokasi diblokir. Klik ikon gembok di address bar → Izin lokasi → Izinkan.'
+             : e.code === 3 ? 'Sinyal GPS lambat. Coba di tempat terbuka.'
+             : 'GPS belum tersedia.' + (window.isSecureContext ? '' : ' GPS hanya jalan lewat HTTPS atau localhost, bukan file:// atau http://.');
+      if (!LM.gps) lmIpFallback();
+      lmUpdateStatus();
+    }, {enableHighAccuracy:true, maximumAge:3000, timeout:15000});
+}
+function lmStopWatch(){
+  if (LM.watchId !== null){ navigator.geolocation.clearWatch(LM.watchId); LM.watchId = null; }
+}
+// cadangan bila GPS diblokir: perkirakan lokasi dari alamat IP (kurang akurat, tapi peta tetap berguna)
+async function lmIpFallback(){
+  if (LM.gps || LM.ipTried) return; LM.ipTried = true;
+  for (const u of ['https://ipwho.is/', 'https://get.geojs.io/v1/ip/geo.json']){
+    try {
+      const j = await (await fetch(u)).json();
+      const lat = parseFloat(j.latitude), lng = parseFloat(j.longitude);
+      if (isFinite(lat) && isFinite(lng)){ if (!LM.gps || LM.approx) lmOnFix(lat, lng, 1000, true); return; }
+    } catch(e){}
+  }
+  lmUpdateStatus();
+}
+function lmRetry(){
+  lmStopWatch(); LM.err = null; LM.ipTried = false; lmStartWatch(); lmUpdateStatus();
+}
+function lmLocate(){
+  if (LM.approx || LM.err) lmRetry();
+  if (LM.gps){
+    LM.mode = 'gps'; LM.place = ''; LM.follow = true; LM.results = []; LM.msg = '';
+    LM.anchor = {lat:LM.gps.lat, lng:LM.gps.lng};
+    render(); LM.map.setView([LM.gps.lat, LM.gps.lng], Math.max(LM.map.getZoom(), 15));
+  } else { lmStopWatch(); lmStartWatch(); lmUpdateStatus(); }
+}
+
+/* --- cari lokasi (OpenStreetMap Nominatim) --- */
+async function lmGeocode(q){
+  const m = q.match(/^\s*(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)\s*$/);   // koordinat langsung, mis. -6.37, 106.83
+  if (m && Math.abs(m[1]) <= 90 && Math.abs(m[2]) <= 180) return [{name:'Koordinat '+m[1]+', '+m[2], lat:+m[1], lng:+m[2]}];
+  try {
+    const r = await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&countrycodes=id&accept-language=id&q=' + encodeURIComponent(q));
+    if (!r.ok) throw new Error('nominatim ' + r.status);
+    const j = await r.json();
+    if (j.length) return j.map(x => ({name:x.display_name, lat:parseFloat(x.lat), lng:parseFloat(x.lon)}));
+  } catch(e){}
+  // cadangan: Photon (OpenStreetMap), dibatasi wilayah Indonesia
+  const r2 = await fetch('https://photon.komoot.io/api/?limit=5&bbox=95,-11.5,141.5,6.5&q=' + encodeURIComponent(q));
+  const j2 = await r2.json();
+  return (j2.features || []).map(f => {
+    const p = f.properties || {};
+    const name = [p.name, p.street, p.district || p.locality, p.city || p.county, p.state].filter((v,i,arr)=>v && arr.indexOf(v)===i).join(', ');
+    return {name:name || q, lat:f.geometry.coordinates[1], lng:f.geometry.coordinates[0]};
+  });
+}
+async function lmSearch(ev){
+  ev.preventDefault();
+  const q = (el('lmQ').value || '').trim(); LM.q = q;
+  if (q.length < 3){ LM.msg = 'Ketik minimal 3 huruf.'; LM.results = []; lmUpdateResults(); return; }
+  LM.results = []; LM.msg = 'Mencari…'; lmUpdateResults();
+  try {
+    LM.results = await lmGeocode(q);
+    LM.msg = LM.results.length ? '' : 'Lokasi tidak ditemukan. Coba kata kunci lain (misalnya tambah nama kota).';
+  } catch(e){ LM.msg = 'Gagal mencari lokasi. Periksa koneksi internet atau coba buka dari browser biasa (bukan pratinjau).'; }
+  lmUpdateResults();
+}
+function lmPick(i){
+  const r = LM.results[i]; if (!r) return;
+  LM.mode = 'search'; LM.follow = false; LM.anchor = {lat:r.lat, lng:r.lng};
+  LM.place = r.name.split(',').slice(0,2).join(',').trim();
+  LM.q = LM.place; LM.results = []; LM.msg = '';
+  render();
+}
+
+function lmStatusHTML(){
+  const ok = LM.gps && !LM.approx;
+  const col = ok ? '#2f80ed' : (LM.err || LM.approx ? C.orange : C.gray);
+  const parts = [];
+  if (ok) parts.push(`GPS aktif · akurasi ±${Math.round(LM.gps.acc)} m` + (LM.mode==='search' ? ` · pusat radius: ${lmEsc(LM.place)}` : ` · pusat radius: posisi kamu`));
+  else if (LM.approx) parts.push('Lokasi perkiraan dari jaringan (kurang akurat).');
+  if (LM.err) parts.push(lmEsc(LM.err));
+  if (!parts.length) parts.push('Mencari sinyal GPS… izinkan akses lokasi saat diminta browser.');
+  const retry = (LM.err || LM.approx) ? ` <button type="button" onclick="lmRetry()" style="font-weight:800;color:var(--green);text-decoration:underline">Coba lagi</button>` : '';
+  return `<span class="dot" style="background:${col};flex-shrink:0"></span><span>${parts.join(' ')}${retry}</span>`;
+}
+function lmResultsHTML(){
+  if (LM.msg) return `<div class="lm-res"><div class="lm-msg">${lmEsc(LM.msg)}</div></div>`;
+  if (!LM.results.length) return '';
+  return `<div class="lm-res">${LM.results.map((r,i)=>`<button onclick="lmPick(${i})">${lmEsc(r.name)}</button>`).join('')}</div>`;
+}
+function lmUpdateStatus(){ const e = el('lmStatus'); if (e) e.innerHTML = lmStatusHTML(); }
+function lmUpdateResults(){ const e = el('lmResults'); if (e) e.innerHTML = lmResultsHTML(); }
+
+function mapSVG(){
+  const inRange = categoryMatched().filter(lmIsIn).sort((a,b)=>parseFloat(a.distance)-parseFloat(b.distance));
+  return `
+  <div class="map-wrap">
+    <form class="lm-search" onsubmit="lmSearch(event)">
+      ${ICONS.search}
+      <input id="lmQ" value="${lmEsc(LM.q)}" placeholder="Cari lokasi: jalan, kampus, kelurahan…" autocomplete="off">
+      <button type="submit">Cari</button>
+    </form>
+    <div id="lmResults">${lmResultsHTML()}</div>
+    <div class="lm-wrap" id="liveMapSlot">
+      <div class="lm-btns"><button type="button" onclick="lmLocate()" aria-label="Ke lokasi saya">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3.5"/><circle cx="12" cy="12" r="8"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></svg>
+      </button></div>
+    </div>
+    <div class="lm-status" id="lmStatus">${lmStatusHTML()}</div>
+    <div class="map-legend">
+      <span><span class="dot" style="background:#2f80ed"></span>Posisi kamu</span>
+      <span><span class="dot" style="background:${C.orange}"></span>Dalam radius</span>
+      <span><span class="dot" style="background:${C.gray}"></span>Di luar radius</span>
+    </div>
+    ${inRange.length ? `
+    <div style="margin-top:10px; display:flex; flex-direction:column; gap:6px">
+      ${inRange.slice(0,4).map(d=>`
+        <button onclick="openDetail(${d.id})" style="display:flex; justify-content:space-between; align-items:center; width:100%; text-align:left; background:#fff; border-radius:12px; padding:9px 12px; font-size:0.76rem; color:var(--ink-soft); box-shadow:0 3px 10px rgba(15,42,34,0.05)">
+          <span style="font-weight:800; color:var(--ink)">${d.name}</span>
+          <span>${d.distance} · ambil ${d.window} · ${d.left} tersisa</span>
+        </button>`).join("")}
+    </div>` : ``}
+  </div>`;
+}
+
+// iklan/promosi internal aplikasi, ditampilkan di beranda pembeli supaya makin tertarik belanja
+function promoBannerHTML(){
+  const slides = [];
+  const newest = state.liveDeals[0];
+  if (newest){
+    slides.push({cls:"", onclick:`openDetail(${newest.id})`, tag:"Baru tayang",
+      title:`${newest.dish || newest.name} dari ${newest.name}`,
+      sub:`Baru saja dicatat mitra, buruan sebelum ${newest.left} porsi habis!`});
+  }
+  slides.push({cls:"orange", onclick:"setMapMode(true)", tag:"Harga Kejutan",
+    title:"Makin dekat jam tutup, harga makin murah",
+    sub:"Cek peta warung terdekat dan pantau paket yang harganya lagi turun sekarang."});
+  slides.push({cls:"", onclick:"setTab('orders')", tag:"Yuk kasih rating",
+    title:"Bantu UMKM sekitar makin berkembang",
+    sub:"Beri rating setelah pesananmu selesai diambil, masukanmu penting buat mitra."});
+  slides.push({cls:"brown", onclick:"switchToUmkm()", tag:"Punya usaha kuliner?",
+    title:"Gabung sebagai Mitra UMKM",
+    sub:"Catat surplus harianmu dan jual lewat Harga Kejutan sebelum makanannya terbuang."});
+  return `
+    <div class="promo-row">
+      ${slides.map(s=>`
+      <button class="promo-card ${s.cls}" ${s.onclick?`onclick="${s.onclick}"`:''}>
+        <span class="promo-tag">${s.tag}</span>
+        <span class="promo-title">${s.title}</span>
+        <span class="promo-sub">${s.sub}</span>
+      </button>`).join("")}
+    </div>`;
+}
+
+function homeListHTML(){
+  const fl = filteredDeals();
+  const addr = activeAddress();
+  return `
+    <button class="loc" style="background:none; border:none; padding:0; width:100%; text-align:left" onclick="goToAddressSettings()">${ICONS.pin} ${addr ? addr.label + " · " + addr.detail : "Pilih alamat"}</button>
+    <h1 class="page-title">Paket apa yang mau diselamatkan hari ini?</h1>
+    ${promoBannerHTML()}
+    <div class="section-sub" style="margin-top:0">Program Bagi Rasa · pencet untuk detail</div>
+    <div class="settings-list" style="margin-bottom:16px">
+      <button onclick="openTierInfo('kamu')">
+        <span><span class="dot" style="background:${TIER_INFO.kamu.color}; margin-right:7px;"></span>Bagi Kamu<span class="settings-sub">${TIER_INFO.kamu.desc}</span></span>
+        <span class="chev">${ICONS.chevron}</span>
+      </button>
+      <button onclick="openTierInfo('peternak')">
+        <span><span class="dot" style="background:${TIER_INFO.peternak.color}; margin-right:7px;"></span>Bagi Peternak<span class="settings-sub">${TIER_INFO.peternak.desc}</span></span>
+        <span class="chev">${ICONS.chevron}</span>
+      </button>
+      <button onclick="openTierInfo('bumi')">
+        <span><span class="dot" style="background:${TIER_INFO.bumi.color}; margin-right:7px;"></span>Bagi Bumi<span class="settings-sub">${TIER_INFO.bumi.desc}</span></span>
+        <span class="chev">${ICONS.chevron}</span>
+      </button>
+    </div>
+    <div class="search-bar">
+      ${ICONS.search}
+      <input id="searchInput" placeholder="Cari toko atau makanan" value="${state.query}">
+    </div>
+    <div class="chip-row">
+      ${CATEGORIES.map(c=>`<button class="chip ${c===state.activeCat?'active':''}" onclick="setCategory('${c}')">${c}</button>`).join("")}
+    </div>
+    <div class="toggle-row">
+      <div class="toggle">
+        <button class="${!state.mapMode?'active':''}" onclick="setMapMode(false)">${ICONS.list} Daftar</button>
+        <button class="${state.mapMode?'active':''}" onclick="setMapMode(true)">${ICONS.map} Peta</button>
+      </div>
+      ${state.mapMode ? `
+      <div class="radius-control">
+        <span>Radius ${state.radius} km</span>
+        <input id="radiusInput" type="range" min="0.5" max="3" step="0.5" value="${state.radius}">
+      </div>` : ``}
+    </div>
+    ${state.mapMode ? mapSVG() : ``}
+    <div class="deal-list">
+      ${fl.length===0 ? `<div class="empty-state">${state.mapMode?'Tidak ada paket dalam radius ini. Coba perbesar radiusnya.':'Tidak ada paket yang cocok. Coba kata kunci lain.'}</div>` : fl.map(dealCardHTML).join("")}
+    </div>
+  `;
+}
+
+function detailHTML(){
+  const d = state.selected;
+  const cp = currentPrice(d);
+  return `
+    <img class="detail-img" src="${d.img}" alt="${d.name}">
+    <div class="sbag-tag">${ICONS.bag} Surprise Bag</div>
+    <div class="detail-cat">${d.category} · ${d.distance}</div>
+    <h2 class="detail-name display">${d.name}</h2>
+    ${d.dish ? `<p style="font-size:0.86rem; font-weight:700; color:var(--ink); margin-bottom:4px">${d.dish}</p>` : ``}
+    <div class="detail-rating">${ICONS.star} ${shopRatingLabel(d.name)}</div>
+    <div class="detail-urgency">
+      <div class="urgency-badge ${isHot(d)?'hot':''}" id="urg-detail-${d.id}">${ICONS.bolt} Harga naik lagi dalam ${urgencyLabel(d)}</div>
+    </div>
+    <p class="detail-desc">Isi paket ini adalah <strong>Surprise Bag</strong>: kombinasi makanan surplus hari ini yang masih layak dan aman dikonsumsi, isinya bisa berbeda tiap kali dibeli. ${d.desc}</p>
+    <div class="pickup-box">
+      ${ICONS.clock}
+      <div><small>Jam pengambilan</small><strong>Hari ini, ${d.window}</strong>${d.jamProduksi ? `<div style="font-size:0.72rem; color:var(--ink-soft); margin-top:2px">Diproduksi pukul ${d.jamProduksi}</div>` : ``}</div>
+    </div>
+    <button class="price-info-btn" onclick="togglePriceInfo()">${ICONS.help} Bagaimana Harga Kejutan dihitung?</button>
+    ${state.showPriceInfo ? `
+    <div class="price-info-box">
+      <strong>Harga turun otomatis berdasarkan:</strong>
+      <ul>
+        <li>Sisa waktu menuju jam tutup/pengambilan — makin dekat, makin murah.</li>
+        <li>Sisa stok menjelang tutup — stok yang masih banyak diberi potongan tambahan.</li>
+        <li>Jam tutup toko sebagai batas akhir masa jual paket ini.</li>
+      </ul>
+    </div>` : ``}
+    <div class="price-qty-row">
+      <div><div class="price-old" style="display:block;margin-bottom:2px">${rp(d.old)}</div><div class="price-big" id="price-detail-${d.id}">${rp(cp)}</div></div>
+      <div class="qty-stepper">
+        <button onclick="changeQty(-1)">${ICONS.minus}</button>
+        <span>${state.qty}</span>
+        <button onclick="changeQty(1)">${ICONS.plus}</button>
+      </div>
+    </div>
+    <button class="btn btn-green" onclick="addToCart()">Masukkan keranjang · ${rp(cp*state.qty)}</button>
+    <p style="text-align:center; font-size:0.72rem; color:var(--ink-soft); margin-top:10px">Harga terkunci begitu masuk keranjang, walau harga di layar terus turun.</p>
+  `;
+}
+
+function cartHTML(){
+  const subtotal = state.cart.reduce((s,c)=>s+c.price*c.qty,0);
+  const total = subtotal + ADMIN_FEE;
+  const count = state.cart.reduce((s,c)=>s+c.qty,0);
+  const activePay = state.paymentMethods.find(p=>p.id===state.activePaymentId);
+  if (state.cart.length===0){
+    return `
+    <h2 class="section-title">Keranjangmu</h2>
+    <div class="empty-state">
+      ${ICONS.bag}
+      <p style="margin-top:10px">Keranjang masih kosong.</p>
+      <button class="btn btn-green" style="width:auto; padding:13px 26px; display:inline-block; margin-top:14px" onclick="goHome()">Cari paket</button>
+    </div>`;
+  }
+  return `
+    <h2 class="section-title">Keranjangmu</h2>
+    ${state.cart.map(item=>`
+      <div class="cart-item">
+        <img src="${item.img}" alt="${item.name}">
+        <div class="cart-item-info">
+          <div class="cart-item-topline">
+            <div>
+              <div class="cart-item-name">${item.name}</div>
+              <div class="cart-item-time">Ambil ${item.window}</div>
+            </div>
+            <button class="cart-item-remove" onclick="removeCartItem(${item.id})" aria-label="Hapus dari keranjang">${ICONS.trash}</button>
+          </div>
+          <div class="cart-item-foot">
+            <div class="cart-qty-stepper">
+              <button onclick="decCartItem(${item.id})" aria-label="Kurangi">${ICONS.minus}</button>
+              <span>${item.qty}</span>
+              <button onclick="incCartItem(${item.id})" aria-label="Tambah">${ICONS.plus}</button>
+            </div>
+            <span style="color:var(--green); font-weight:800">${rp(item.price*item.qty)}</span>
+          </div>
+        </div>
+      </div>`).join("")}
+    <div class="impact-note">${ICONS.leaf} Pesanan ini membantu selamatkan ${count} porsi makanan dari terbuang.</div>
+    <div class="pay-method-row">
+      <div>
+        <div class="pay-method-lbl">Metode pembayaran</div>
+        <div class="pay-method-name">${activePay ? activePay.name : "Belum dipilih"}</div>
+      </div>
+      <button class="pay-change-btn" onclick="goToPaymentSettings()">Ganti</button>
+    </div>
+    <div class="total-row" style="margin-bottom:4px"><span style="font-weight:600; color:var(--ink-soft)">Subtotal</span><span style="font-family:'Fredoka'; font-size:1rem; font-weight:600; color:var(--ink)">${rp(subtotal)}</span></div>
+    <div class="total-row" style="margin-bottom:4px"><span style="font-weight:600; color:var(--ink-soft)">Biaya admin</span><span style="font-family:'Fredoka'; font-size:1rem; font-weight:600; color:var(--ink)">${rp(ADMIN_FEE)}</span></div>
+    <div class="total-row"><span>Total bayar</span><span>${rp(total)}</span></div>
+    <button class="btn btn-orange" onclick="startCheckout()">Bayar sekarang</button>
+  `;
+}
+
+function successHTML(){
+  const o = state.lastOrder;
+  return `
+    <div class="success-wrap">
+      <div class="success-check">${ICONS.check}</div>
+      <h2 class="section-title" style="text-align:center">Pesanan berhasil!</h2>
+      <p style="color:var(--ink-soft); font-size:0.88rem; margin-bottom:16px">Kode berbeda untuk tiap warung. Tunjukkan kode yang sesuai saat ambil paket di masing-masing warung.</p>
+      <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px">
+        ${(o.pickups||[{shopName:"Pesanan",window:"",code:o.code}]).map(p=>`
+          <div class="select-row" style="justify-content:space-between; text-align:left; box-shadow:0 6px 18px rgba(15,42,34,0.06)">
+            <div class="select-info">
+              <strong>${p.shopName}</strong>
+              ${p.window ? `<span>Ambil ${p.window}</span>` : ``}
+            </div>
+            <span class="display" style="font-size:1.2rem; font-weight:700; color:var(--green); letter-spacing:0.08em; flex-shrink:0">${p.code}</span>
+          </div>`).join("")}
+      </div>
+      <p style="font-size:0.82rem; color:var(--ink-soft); margin-bottom:20px">Atas nama <strong style="color:var(--ink)">${o.buyer}</strong> · ${o.payment}</p>
+      <div class="receipt">
+        ${o.items.map(i=>`<div class="receipt-row"><span>${i.qty}x ${i.name}</span><span style="font-weight:700">${rp(i.price*i.qty)}</span></div>`).join("")}
+        <div class="receipt-row"><span>Biaya admin</span><span style="font-weight:700">${rp(o.adminFee || 0)}</span></div>
+        <div class="receipt-row receipt-total"><span>Total</span><span style="color:var(--green)">${rp(o.total)}</span></div>
+      </div>
+      <button class="btn btn-green" onclick="goHome()">Kembali ke beranda</button>
+    </div>
+  `;
+}
+
+function ordersHTML(){
+  if (state.orders.length===0){
+    return `
+    <h2 class="section-title">Pesananku</h2>
+    <div class="empty-state">${ICONS.receipt}<p style="margin-top:10px">Belum ada pesanan. Yuk cari paket pertamamu.</p></div>`;
+  }
+  return `
+    <h2 class="section-title">Pesananku</h2>
+    ${state.orders.map((o,oi)=>`
+      <div class="order-card">
+        <div class="order-top"><span class="order-code">${(o.pickups && o.pickups.length>1) ? o.pickups.length+" warung" : o.code}</span><span class="status-pill">Selesai</span></div>
+        ${(o.pickups||[]).map(p=>{
+          const urg = p.deadlineAt ? pickupUrgencyInfo(p.deadlineAt) : null;
+          return `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 2px">
+            <span class="order-item" style="font-weight:800; color:var(--ink)">${p.shopName}</span>
+            <span style="font-weight:800; font-size:0.78rem; color:var(--green); letter-spacing:0.06em">${p.code}</span>
+          </div>
+          ${p.items.map(i=>`<div class="order-item">${i.qty}x ${i.name}</div>`).join("")}
+          ${urg ? `<div class="pickup-urgency ${urg.cls}" id="pickup-urg-${p.code}">${ICONS.clock} ${urg.text}</div>` : ``}
+          ${ratingBoxHTML(oi, p)}
+          ${p.complained
+            ? `<div class="report-done">Laporan untuk pesanan ini sudah terkirim, tim kami sedang meninjau.</div>`
+            : `<button class="report-link" onclick="openComplaint(${oi}, '${p.code}')">${ICONS.help} Laporkan masalah pesanan ini</button>`}
+        `;}).join("")}
+        <div class="order-total">${rp(o.total)}</div>
+      </div>`).join("")}
+  `;
+}
+
+// kartu rating 1 arah: pembeli menilai UMKM setelah pesanan selesai diambil
+function ratingBoxHTML(orderIdx, p){
+  if (p.myRating){
+    return `<div class="rating-box"><div class="rating-label">Rating kamu untuk ${p.shopName}</div>
+      <div class="rating-stars">${[1,2,3,4,5].map(n=>`<span style="color:${n<=p.myRating?'var(--yellow)':'var(--gray)'}">${ICONS.star}</span>`).join("")}</div>
+      <div class="rating-done" style="margin-top:4px">Terima kasih atas penilaianmu!</div>
+    </div>`;
+  }
+  return `<div class="rating-box"><div class="rating-label">Beri rating untuk ${p.shopName}</div>
+    <div class="rating-stars">${[1,2,3,4,5].map(n=>`<button onclick="rateShopOrder(${orderIdx}, '${p.code}', ${n})" aria-label="Beri ${n} bintang" style="color:var(--gray)">${ICONS.star}</button>`).join("")}</div>
+  </div>`;
+}
+
+function profileHTML(){
+  if (state.profileSub === "address") return addressHTML();
+  if (state.profileSub === "payment") return paymentHTML();
+  if (state.profileSub === "notif") return notifHTML();
+  if (state.profileSub === "help") return helpHTML();
+  return profileMainHTML();
+}
+
+function consumerTierHTML(tier){
+  const info = TIER_INFO[tier];
+  const mitra = MITRA_PENYALURAN.filter(m=>m.tier===tier);
+  const produk = tierDealPool(tier);
+  return `
+    <h2 class="section-title">${info.label}</h2>
+    <div class="tier-detail-head" style="border-left:5px solid ${info.color}">
+      <span class="tier-badge ${tier}">${info.label}</span>
+      <p>${info.desc}</p>
+    </div>
+    ${tier==="kamu" ? `
+      <div class="mitra-card">
+        <div class="mitra-icon" style="background:${info.color}">${ICONS.bag}</div>
+        <div class="mitra-info"><strong>Surprise Bag</strong><span>Surplus yang masih layak & aman dikonsumsi dijual lebih murah lewat Harga Kejutan sebelum masa simpannya habis.</span></div>
+      </div>
+      <button class="btn btn-green" style="margin-top:12px" onclick="setTab('home')">Lihat Surprise Bag</button>
+    ` : `
+      <div class="section-sub">Bisa dibeli langsung</div>
+      <div class="deal-list" style="margin-bottom:18px">
+        ${produk.map(d=>tierDealCardHTML(d, tier)).join("")}
+      </div>
+      <div class="section-sub">Mitra penyaluran ${info.label.toLowerCase()}</div>
+      ${mitra.length===0 ? `<div class="empty-state">Belum ada mitra untuk jalur ini.</div>` : mitra.map(m=>`
+      <div class="mitra-card">
+        <div class="mitra-icon" style="background:${info.color}">${ICONS.leaf}</div>
+        <div class="mitra-info"><strong>${m.nama}</strong><span>${m.jenis} · ${m.jadwal}</span></div>
+      </div>`).join("")}
+    `}
+  `;
+}
+
+function profileMainHTML(){
+  const savedPortions = state.orders.reduce((s,o)=>s+o.items.reduce((a,i)=>a+i.qty,0),0);
+  const activeAddr = state.addresses.find(a=>a.id===state.activeAddressId);
+  const activePay = state.paymentMethods.find(p=>p.id===state.activePaymentId);
+  return `
+    <h2 class="section-title">Profilku</h2>
+    <div class="profile-card">
+      <div class="avatar">${initials(state.profileName)}</div>
+      <div><div style="font-weight:800">${state.profileName}</div><div style="font-size:0.78rem; color:var(--ink-soft)">${state.auth.email || "tamu@bagirasa.app"}</div></div>
+    </div>
+    <div class="stat-box">
+      <div><div class="num">${state.orders.length}</div><div class="lbl">Total pesanan</div></div>
+      <div><div class="num">${savedPortions}</div><div class="lbl">Porsi diselamatkan</div></div>
+    </div>
+    <div class="settings-list">
+      <button onclick="openProfileSub('address')">
+        <span>${ICONS.pin} Alamat pengambilan<span class="settings-sub">${activeAddr?activeAddr.label:'Belum diatur'}</span></span>
+        <span class="chev">${ICONS.chevron}</span>
+      </button>
+      <button onclick="openProfileSub('payment')">
+        <span>${ICONS.card} Metode pembayaran<span class="settings-sub">${activePay?activePay.name:'Belum diatur'}</span></span>
+        <span class="chev">${ICONS.chevron}</span>
+      </button>
+      <button onclick="openProfileSub('notif')">
+        <span>${ICONS.bell} Notifikasi</span>
+        <span class="chev">${ICONS.chevron}</span>
+      </button>
+      <button onclick="openProfileSub('help')">
+        <span>${ICONS.help} Bantuan</span>
+        <span class="chev">${ICONS.chevron}</span>
+      </button>
+    </div>
+    <button class="role-switch-link" onclick="switchToUmkm()">${ICONS.leaf} Masuk sebagai Mitra UMKM</button>
+    <button class="logout-btn" onclick="logout()">${ICONS.logout} Keluar</button>
+  `;
+}
+
+function addressHTML(){
+  return `
+    <h2 class="section-title">Alamat pengambilan</h2>
+    <p style="font-size:0.82rem; color:var(--ink-soft); margin-bottom:14px">Pilih alamat acuan supaya rekomendasi jarak paket lebih akurat. Daftar warung dan menu di beranda akan menyesuaikan alamat yang dipilih.</p>
+    ${state.addresses.map(a=>`
+      <button class="select-row ${a.id===state.activeAddressId?'active':''}" onclick="selectAddress(${a.id})">
+        <span class="select-radio">${a.id===state.activeAddressId?'<span class="dot"></span>':''}</span>
+        <span class="select-info"><strong>${a.label}</strong><span>${a.detail}</span></span>
+      </button>`).join("")}
+    <button class="add-row" onclick="addAddress()">${ICONS.plus} Tambah alamat baru</button>
+  `;
+}
+
+function paymentHTML(){
+  return `
+    <h2 class="section-title">Metode pembayaran</h2>
+    <p style="font-size:0.82rem; color:var(--ink-soft); margin-bottom:14px">Bagi Rasa hanya menerima QRIS dan tunai saat ambil paket.</p>
+    ${state.paymentMethods.map(p=>`
+      <button class="select-row ${p.id===state.activePaymentId?'active':''}" onclick="selectPayment(${p.id})">
+        <span class="select-radio">${p.id===state.activePaymentId?'<span class="dot"></span>':''}</span>
+        <span class="select-info"><strong>${p.name}</strong><span>${p.detail}</span></span>
+      </button>`).join("")}
+  `;
+}
+
+function notifHTML(){
+  const items = [
+    {key:"nearby", title:"Paket baru di dekatmu", desc:"Notifikasi saat ada paket baru dalam radius pencarianmu."},
+    {key:"priceDrop", title:"Harga turun", desc:"Notifikasi saat harga paket favoritmu makin murah."},
+    {key:"order", title:"Status pesanan", desc:"Update saat pesanan siap diambil."},
+    {key:"promo", title:"Promo aplikasi", desc:"Info promo dan paket baru dari mitra."},
+  ];
+  return `
+    <h2 class="section-title">Notifikasi</h2>
+    ${items.map(i=>`
+      <div class="notif-row">
+        <div class="notif-info"><strong>${i.title}</strong><span>${i.desc}</span></div>
+        <label class="switch">
+          <input type="checkbox" ${state.notifSettings[i.key]?'checked':''} onchange="toggleNotif('${i.key}')">
+          <span class="slider"></span>
+        </label>
+      </div>`).join("")}
+  `;
+}
+
+function helpHTML(){
+  const faqs = [
+    {q:"Bagaimana cara mengambil pesanan?", a:"Tunjukkan kode pesanan ke penjual pada jam pengambilan yang tertera di aplikasi. Paket diserahkan langsung di tempat."},
+    {q:"Kenapa harga bisa berubah-ubah?", a:"Fitur Harga Kejutan menurunkan harga otomatis makin dekat waktu tutup penjual. Harga akan terkunci begitu paket masuk keranjang."},
+    {q:"Bagaimana jika pesanan tidak diambil?", a:"Pesanan yang tidak diambil sesuai jadwal dianggap hangus, karena stoknya adalah makanan yang harus segera didistribusikan ke pihak lain."},
+  ];
+  return `
+    <h2 class="section-title">Bantuan</h2>
+    ${faqs.map(f=>`
+      <details class="faq-item">
+        <summary>${f.q} <span class="chev">${ICONS.chevron}</span></summary>
+        <p>${f.a}</p>
+      </details>`).join("")}
+    <a class="help-contact" href="https://wa.me/6281234567890" target="_blank" rel="noopener">${ICONS.whatsapp} Hubungi CS via WhatsApp</a>
+  `;
+}
+
+/* ---------------- top bar + nav ---------------- */
+/* ---------------- login / daftar ---------------- */
+function initials(name){
+  const parts = (name||"").trim().split(/\s+/).filter(Boolean);
+  if (parts.length===0) return "U";
+  return parts.slice(0,2).map(w=>w[0].toUpperCase()).join("");
+}
+function validateEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+function authHTML(){
+  const a = state.auth;
+  return `
+  <div class="auth-screen">
+    <div class="auth-logo">
+      <svg width="34" height="34" viewBox="0 0 100 100" fill="none">
+        <path d="M50 14c-10 0-18 8-18 18h36c0-10-8-18-18-18z" fill="#0F5D4E"/>
+        <path d="M18 40l6 34c1 8 8 14 16 14h20c8 0 15-6 16-14l6-34a4 4 0 00-4-5H22a4 4 0 00-4 5z" fill="#0F5D4E"/>
+        <path d="M50 88l-16-14a14 14 0 0116-6 14 14 0 0116 6L50 88z" fill="#FAF9F6"/>
+      </svg>
+      <span class="display">Bagi Rasa</span>
+    </div>
+    <p class="auth-tag">${a.mode==="login" ? "Masuk untuk mulai menyelamatkan makanan." : "Buat akun baru dan mulai berbagi rasa."}</p>
+
+    <div class="toggle auth-toggle">
+      <button class="${a.mode==="login"?"active":""}" onclick="setAuthMode('login')">Masuk</button>
+      <button class="${a.mode==="register"?"active":""}" onclick="setAuthMode('register')">Daftar</button>
+    </div>
+
+    ${a.error ? `<div class="auth-error">${a.error}</div>` : ``}
+
+    <div class="auth-form">
+      ${a.mode==="register" ? `
+      <div class="field-group">
+        <label>Nama lengkap</label>
+        <input id="authName" type="text" placeholder="Nama kamu" value="${a.name}">
+      </div>` : ``}
+      <div class="field-group">
+        <label>Email</label>
+        <input id="authEmail" type="email" placeholder="nama@email.com" value="${a.email}" autocomplete="email">
+      </div>
+      <div class="field-group">
+        <label>Kata sandi</label>
+        <input id="authPassword" type="password" placeholder="Minimal 6 karakter" value="${a.password}" autocomplete="current-password">
+      </div>
+      ${a.mode==="login" ? `<button class="auth-forgot" onclick="forgotPassword()">Lupa kata sandi?</button>` : ``}
+      <button class="btn btn-green" onclick="submitAuth()">${a.mode==="login" ? "Masuk" : "Buat akun"}</button>
+    </div>
+
+    <button class="auth-guest" onclick="continueAsGuest()">Lanjut sebagai tamu</button>
+  </div>`;
+}
+
+/* layar login/daftar khusus akun Mitra UMKM — sengaja terpisah dari akun Pembeli */
+function mitraAuthHTML(){
+  const a = state.umkmAuth;
+  return `
+  <div class="auth-screen">
+    <button class="mitra-auth-back" onclick="switchToConsumer()">${'\u2190'} Kembali sebagai Pembeli</button>
+    <div class="auth-logo">
+      <svg width="34" height="34" viewBox="0 0 100 100" fill="none">
+        <path d="M50 14c-10 0-18 8-18 18h36c0-10-8-18-18-18z" fill="#0F5D4E"/>
+        <path d="M18 40l6 34c1 8 8 14 16 14h20c8 0 15-6 16-14l6-34a4 4 0 00-4-5H22a4 4 0 00-4 5z" fill="#0F5D4E"/>
+        <path d="M50 88l-16-14a14 14 0 0116-6 14 14 0 0116 6L50 88z" fill="#FAF9F6"/>
+      </svg>
+      <span class="display">Bagi Rasa Mitra</span>
+    </div>
+    <p class="auth-tag">${a.mode==="login" ? "Masuk dengan akun Mitra UMKM kamu." : "Daftarkan akun Mitra UMKM baru."} Akun ini terpisah dari akun Pembeli dan wajib pakai email berbeda.</p>
+
+    <div class="toggle auth-toggle">
+      <button class="${a.mode==="login"?"active":""}" onclick="setUmkmAuthMode('login')">Masuk</button>
+      <button class="${a.mode==="register"?"active":""}" onclick="setUmkmAuthMode('register')">Daftar</button>
+    </div>
+
+    ${a.error ? `<div class="auth-error">${a.error}</div>` : ``}
+
+    <div class="auth-form">
+      ${a.mode==="register" ? `
+      <div class="field-group">
+        <label>Nama usaha / pemilik</label>
+        <input id="mitraAuthName" type="text" placeholder="cth. Warung Bu Sari" value="${a.name}">
+      </div>` : ``}
+      <div class="field-group">
+        <label>Email Mitra UMKM</label>
+        <input id="mitraAuthEmail" type="email" placeholder="usaha@email.com" value="${a.email}" autocomplete="email">
+      </div>
+      <div class="field-group">
+        <label>Kata sandi</label>
+        <input id="mitraAuthPassword" type="password" placeholder="Minimal 6 karakter" value="${a.password}" autocomplete="current-password">
+      </div>
+      <button class="btn btn-green" onclick="submitMitraAuth()">${a.mode==="login" ? "Masuk sebagai Mitra" : "Daftar sebagai Mitra"}</button>
+    </div>
+  </div>`;
+}
+
+function setAuthMode(m){ state.auth.mode = m; state.auth.error = ""; render(); }
+
+function submitAuth(){
+  const a = state.auth;
+  if (a.mode==="register" && !a.name.trim()){ a.error = "Nama tidak boleh kosong."; render(); return; }
+  if (!validateEmail(a.email)){ a.error = "Format email belum valid."; render(); return; }
+  if (a.password.length < 6){ a.error = "Kata sandi minimal 6 karakter."; render(); return; }
+  a.error = "";
+  a.loggedIn = true;
+  state.profileName = a.mode==="register" ? a.name.trim() : a.email.split("@")[0];
+  render();
+}
+
+function continueAsGuest(){
+  state.auth.loggedIn = true;
+  state.auth.error = "";
+  state.profileName = "Tamu";
+  render();
+}
+
+function forgotPassword(){
+  alert("Tautan reset kata sandi telah dikirim ke email kamu (simulasi).");
+}
+
+function logout(){
+  state.auth = { loggedIn:false, mode:"login", name:"", email:"", password:"", error:"" };
+  state.tab = "home"; state.view = "list"; state.profileSub = null;
+  render();
+}
+
+/* ---------------- pembayaran QR (acak) ---------------- */
+function fakeQR(size = 21){
+  const grid = Array.from({length:size}, () => Array.from({length:size}, () => Math.random() < 0.42));
+  const placeFinder = (gx, gy) => {
+    for (let y=0; y<7; y++){
+      for (let x=0; x<7; x++){
+        const ring = (x===0 || x===6 || y===0 || y===6);
+        const core = (x>=2 && x<=4 && y>=2 && y<=4);
+        grid[gy+y][gx+x] = ring || core;
+      }
+    }
+  };
+  placeFinder(0,0); placeFinder(size-7,0); placeFinder(0,size-7);
+  return grid;
+}
+function qrSVG(grid){
+  const cell = 8, size = grid.length, px = size*cell;
+  let rects = "";
+  for (let y=0; y<size; y++){
+    for (let x=0; x<size; x++){
+      if (grid[y][x]) rects += `<rect x="${x*cell}" y="${y*cell}" width="${cell}" height="${cell}"/>`;
+    }
+  }
+  return `<svg viewBox="0 0 ${px} ${px}" width="180" height="180" fill="#163C33">${rects}</svg>`;
+}
+function randomRef(){
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let s = "";
+  for (let i=0; i<8; i++) s += chars[Math.floor(Math.random()*chars.length)];
+  return s.slice(0,4) + "-" + s.slice(4);
+}
+function regenerateQR(){
+  state.qrGrid = fakeQR();
+  state.qrCode = randomRef();
+  state.qrExpiresAt = Date.now() + 5*60000;
+}
+function paymentTimeLeftMs(){ return Math.max(0, state.qrExpiresAt - Date.now()); }
+function paymentTimeLabel(){
+  const ms = paymentTimeLeftMs();
+  const mins = Math.floor(ms/60000), secs = Math.floor((ms%60000)/1000);
+  return `${String(mins).padStart(2,"0")}:${String(secs).padStart(2,"0")}`;
+}
+
+function startCheckout(){
+  if (state.cart.length===0) return;
+  state.pendingCode = generateOrderCode();
+  const pay = state.paymentMethods.find(p=>p.id===state.activePaymentId);
+  if (pay && pay.name === "Tunai"){
+    state.view = "cash";
+  } else {
+    regenerateQR();
+    state.view = "qr";
+  }
+  render();
+}
+function confirmPayment(){ placeOrder(); }
+function cancelPayment(){ state.view = "cart"; render(); }
+
+function qrHTML(){
+  const total = state.cart.reduce((s,c)=>s+c.price*c.qty,0) + ADMIN_FEE;
+  return `
+    <h2 class="section-title">Bayar dengan QRIS</h2>
+    <div class="qr-card">
+      <div class="qr-box">${qrSVG(state.qrGrid)}</div>
+      <div class="qr-amount">${rp(total)}</div>
+      <div class="qr-buyer">${state.profileName}</div>
+      <div class="qr-ref">Kode pesanan: <strong>${state.pendingCode}</strong></div>
+      <div class="qr-timer-badge">${ICONS.clock} Kedaluwarsa dalam <span id="qr-timer">${paymentTimeLabel()}</span></div>
+    </div>
+    <p class="qr-hint">Buka aplikasi e-wallet atau m-banking mana pun, lalu pindai kode QR ini untuk menyelesaikan pembayaran.</p>
+    <button class="btn btn-green" onclick="confirmPayment()">Saya sudah bayar</button>
+    <button class="qr-cancel" onclick="cancelPayment()">Batalkan pembayaran</button>
+  `;
+}
+
+function cashHTML(){
+  const total = state.cart.reduce((s,c)=>s+c.price*c.qty,0) + ADMIN_FEE;
+  return `
+    <h2 class="section-title">Bayar Tunai</h2>
+    <div class="qr-card">
+      <div class="cash-icon">${ICONS.cash}</div>
+      <div class="qr-amount">${rp(total)}</div>
+      <div class="qr-buyer">${state.profileName}</div>
+      <div class="qr-ref">Kode pesanan: <strong>${state.pendingCode}</strong></div>
+    </div>
+    <p class="qr-hint">Tunjukkan kode pesanan ini ke penjual, lalu bayar tunai sejumlah ${rp(total)} saat mengambil paket.</p>
+    <button class="btn btn-green" onclick="confirmPayment()">Konfirmasi pesanan</button>
+    <button class="qr-cancel" onclick="cancelPayment()">Batalkan</button>
+  `;
+}
+
+function topBarHTML(){
+  if (state.role==="umkm"){
+    if (state.umkmTierView){
+      return `<button class="back-link" onclick="closeTierDetail()">${ICONS.back} Kembali</button>`;
+    }
+    return `
+    <div class="topbar-row">
+      <div class="brand">
+        <svg width="30" height="30" viewBox="0 0 100 100" fill="none">
+          <path d="M50 14c-10 0-18 8-18 18h36c0-10-8-18-18-18z" fill="#0F5D4E"/>
+          <path d="M18 40l6 34c1 8 8 14 16 14h20c8 0 15-6 16-14l6-34a4 4 0 00-4-5H22a4 4 0 00-4 5z" fill="#0F5D4E"/>
+          <path d="M50 88l-16-14a14 14 0 0116-6 14 14 0 0116 6L50 88z" fill="#FAF9F6"/>
+        </svg>
+        <span class="display">Bagi Rasa Mitra</span>
+      </div>
+    </div>`;
+  }
+  if (state.tab==="profile" && state.profileSub){
+    return `<button class="back-link" onclick="closeProfileSub()">${ICONS.back} Kembali</button>`;
+  }
+  if (state.view==="qr" || state.view==="cash"){
+    return `<button class="back-link" onclick="cancelPayment()">${ICONS.back} Kembali</button>`;
+  }
+  if (state.view==="tierInfo"){
+    return `<button class="back-link" onclick="closeTierInfo()">${ICONS.back} Kembali</button>`;
+  }
+  if (state.view==="tierItemDetail" || (state.view==="cart" && state.selectedTierKind)){
+    return `<button class="back-link" onclick="closeTierItemDetail()">${ICONS.back} Kembali</button>`;
+  }
+  if (state.view==="complaint"){
+    return `<button class="back-link" onclick="closeComplaint()">${ICONS.back} Kembali</button>`;
+  }
+  if (state.view==="detail" || (state.view==="cart" && state.tab==="home")){
+    const backTo = state.view==="detail" ? "list" : "list";
+    return `<button class="back-link" onclick="backToList()">${ICONS.back} Kembali</button>`;
+  }
+  const count = state.cart.reduce((s,c)=>s+c.qty,0);
+  return `
+    <div class="topbar-row">
+      <div class="brand">
+        <svg width="30" height="30" viewBox="0 0 100 100" fill="none">
+          <path d="M50 14c-10 0-18 8-18 18h36c0-10-8-18-18-18z" fill="#0F5D4E"/>
+          <path d="M18 40l6 34c1 8 8 14 16 14h20c8 0 15-6 16-14l6-34a4 4 0 00-4-5H22a4 4 0 00-4 5z" fill="#0F5D4E"/>
+          <path d="M50 88l-16-14a14 14 0 0116-6 14 14 0 0116 6L50 88z" fill="#FAF9F6"/>
+        </svg>
+        <span class="display">Bagi Rasa</span>
+      </div>
+      <button class="cart-btn" onclick="openCart()">
+        ${ICONS.bag}
+        ${count>0 ? `<span class="cart-badge">${count}</span>` : ``}
+      </button>
+    </div>`;
+}
+function backToList(){ state.view="list"; render(); }
+function openCart(){ state.tab="home"; state.view="cart"; render(); }
+
+function bottomNavHTML(){
+  if (state.role==="umkm") return umkmBottomNavHTML();
+  if (state.view==="detail" || state.view==="success" || state.view==="qr" || state.view==="cash" || state.view==="complaint") return "";
+  const items = [
+    {key:"home", label:"Beranda", icon:ICONS.home},
+    {key:"orders", label:"Pesanan", icon:ICONS.receipt},
+    {key:"profile", label:"Profil", icon:ICONS.user},
+  ];
+  return `<div class="bottom-nav">
+    ${items.map(i=>{
+      const active = state.tab===i.key && (i.key!=="home" || state.view==="list");
+      return `<button class="nav-btn ${active?'active':''}" onclick="setTab('${i.key}')">${i.icon}<span>${i.label}</span></button>`;
+    }).join("")}
+  </div>`;
+}
+
+/* ---------------- main render ---------------- */
+function bodyHTML(){
+  if (state.role==="umkm") return umkmBodyHTML();
+  if (state.view==="qr") return qrHTML();
+  if (state.view==="cash") return cashHTML();
+  if (state.view==="complaint") return complaintHTML();
+  if (state.view==="cart") return cartHTML();
+  if (state.view==="success") return successHTML();
+  if (state.view==="detail") return detailHTML();
+  if (state.view==="tierInfo") return consumerTierHTML(state.tierInfoKind);
+  if (state.view==="tierItemDetail") return tierItemDetailHTML();
+  if (state.tab==="orders") return ordersHTML();
+  if (state.tab==="profile") return profileHTML();
+  return homeListHTML();
+}
+
+function render(){
+  if (state.role==="umkm"){
+    if (!state.umkmAuth.loggedIn){
+      el("app").innerHTML = mitraAuthHTML();
+      wireMitraAuthInputs();
+      return;
+    }
+  } else if (!state.auth.loggedIn){
+    el("app").innerHTML = authHTML();
+    wireAuthInputs();
+    return;
+  }
+  el("app").innerHTML = `
+    <div class="topbar">${topBarHTML()}</div>
+    <div class="content">${bodyHTML()}</div>
+    ${bottomNavHTML()}
+  `;
+  // wire up inputs that need live events (rebuilt each render)
+  const si = el("searchInput");
+  if (si) si.addEventListener("input", e => { state.query = e.target.value; render(); preserveFocus("searchInput"); });
+  const ri = el("radiusInput");
+  if (ri) ri.addEventListener("input", e => { state.radius = parseFloat(e.target.value); render(); });
+  wireUmkmInputs();
+  wireComplaintInputs();
+  lmSync();
+}
+
+// wire up the complaint note textarea (rebuilt each render)
+function wireComplaintInputs(){
+  const cn = el("complaintNoteInput");
+  if (cn) cn.addEventListener("input", e => { state.complaintForm.note = e.target.value; });
+}
+
+// wire up the UMKM surplus-form fields (rebuilt each render)
+function wireUmkmInputs(){
+  const un = el("umkmNamaInput");
+  if (un) un.addEventListener("input", e => { state.umkmForm.nama = e.target.value; render(); preserveFocus("umkmNamaInput"); });
+  const uj = el("umkmJumlahInput");
+  if (uj) uj.addEventListener("input", e => { state.umkmForm.jumlah = e.target.value; render(); preserveFocus("umkmJumlahInput"); });
+  const uv = el("umkmNilaiInput");
+  if (uv) uv.addEventListener("input", e => { state.umkmForm.nilaiSatuan = e.target.value; render(); preserveFocus("umkmNilaiInput"); });
+  const ujp = el("umkmJamProduksiInput");
+  if (ujp) ujp.addEventListener("input", e => { state.umkmForm.jamProduksi = e.target.value; render(); preserveFocus("umkmJamProduksiInput"); });
+}
+
+// wire up the Mitra UMKM login/daftar form fields (rebuilt each render)
+function wireMitraAuthInputs(){
+  const an = el("mitraAuthName");
+  if (an) an.addEventListener("input", e => { state.umkmAuth.name = e.target.value; render(); preserveFocus("mitraAuthName"); });
+  const ae = el("mitraAuthEmail");
+  if (ae) ae.addEventListener("input", e => { state.umkmAuth.email = e.target.value; render(); preserveFocus("mitraAuthEmail"); });
+  const ap = el("mitraAuthPassword");
+  if (ap){
+    ap.addEventListener("input", e => { state.umkmAuth.password = e.target.value; render(); preserveFocus("mitraAuthPassword"); });
+    ap.addEventListener("keydown", e => { if (e.key === "Enter") submitMitraAuth(); });
+  }
+}
+
+// wire up the login/daftar form fields (rebuilt each render)
+function wireAuthInputs(){
+  const an = el("authName");
+  if (an) an.addEventListener("input", e => { state.auth.name = e.target.value; render(); preserveFocus("authName"); });
+  const ae = el("authEmail");
+  if (ae) ae.addEventListener("input", e => { state.auth.email = e.target.value; render(); preserveFocus("authEmail"); });
+  const ap = el("authPassword");
+  if (ap){
+    ap.addEventListener("input", e => { state.auth.password = e.target.value; render(); preserveFocus("authPassword"); });
+    ap.addEventListener("keydown", e => { if (e.key === "Enter") submitAuth(); });
+  }
+}
+
+// keep caret/focus on the search field across re-renders
+function preserveFocus(id){
+  requestAnimationFrame(()=>{
+    const node = el(id);
+    if (node){ node.focus(); node.selectionStart = node.selectionEnd = node.value.length; }
+  });
+}
+
+/* ---------------- live countdown tick (1x/detik) ---------------- */
+function updateCountdownUI(){
+  DEALS.concat(state.liveDeals).forEach(d=>{
+    // kalau waktu habis, mulai siklus "harga turun" berikutnya (demo loop)
+    if (timeLeftMs(d) <= 0){
+      d.endsAt = Date.now() + (4 + Math.random()*10) * 60000;
+    }
+    const label = urgencyLabel(d);
+    const hot = isHot(d);
+    const cp = currentPrice(d);
+
+    // badge + harga di kartu daftar
+    const badge = el(`urg-${d.id}`);
+    if (badge){
+      badge.classList.toggle("hot", hot);
+      badge.innerHTML = `${ICONS.bolt} Harga naik lagi ${label}`;
+    }
+    const priceEl = el(`price-${d.id}`);
+    if (priceEl && priceEl.dataset.price !== String(cp)){
+      priceEl.textContent = rp(cp);
+      priceEl.dataset.price = cp;
+      priceEl.classList.remove("price-drop-flash");
+      void priceEl.offsetWidth; // restart animasi
+      priceEl.classList.add("price-drop-flash");
+    }
+
+    // badge + harga di halaman detail (kalau sedang dibuka)
+    if (state.view === "detail" && state.selected && state.selected.id === d.id){
+      const badgeD = el(`urg-detail-${d.id}`);
+      if (badgeD){
+        badgeD.classList.toggle("hot", hot);
+        badgeD.innerHTML = `${ICONS.bolt} Harga naik lagi dalam ${label}`;
+      }
+      const priceD = el(`price-detail-${d.id}`);
+      if (priceD) priceD.textContent = rp(cp);
+      const btn = document.querySelector('.btn.btn-green[onclick="addToCart()"]');
+      if (btn) btn.textContent = `Masukkan keranjang · ${rp(cp*state.qty)}`;
+    }
+  });
+
+  // notifikasi urgensi pengambilan pesanan (kalau halaman Pesananku sedang dibuka)
+  if (state.tab === "orders"){
+    state.orders.forEach(o=>{
+      (o.pickups||[]).forEach(p=>{
+        if (!p.deadlineAt) return;
+        const badge = el(`pickup-urg-${p.code}`);
+        if (!badge) return;
+        const urg = pickupUrgencyInfo(p.deadlineAt);
+        badge.className = `pickup-urgency ${urg.cls}`;
+        badge.innerHTML = `${ICONS.clock} ${urg.text}`;
+      });
+    });
+  }
+
+  // countdown kedaluwarsa QR pembayaran
+  if (state.view === "qr"){
+    if (paymentTimeLeftMs() <= 0){
+      regenerateQR();
+      render();
+    } else {
+      const t = el("qr-timer");
+      if (t) t.textContent = paymentTimeLabel();
+    }
+  }
+}
+setInterval(updateCountdownUI, 1000);
+
+function setCategory(c){ state.activeCat = c; render(); }
+function setMapMode(v){
+  state.mapMode = v; render();
+  if (v){ const f = document.querySelector('.lm-search'); if (f) f.scrollIntoView({behavior:'smooth', block:'center'}); }
+}
+function togglePriceInfo(){ state.showPriceInfo = !state.showPriceInfo; render(); }
+function changeQty(delta){
+  state.qty = Math.max(1, Math.min(state.selected.left, state.qty + delta));
+  render();
+}
+
+/* expose handlers used via inline onclick */
+window.openDetail = openDetail;
+window.addToCart = addToCart;
+window.placeOrder = placeOrder;
+window.goHome = goHome;
+window.setTab = setTab;
+window.setCategory = setCategory;
+window.setMapMode = setMapMode;
+window.changeQty = changeQty;
+window.backToList = backToList;
+window.openCart = openCart;
+window.openProfileSub = openProfileSub;
+window.closeProfileSub = closeProfileSub;
+window.selectAddress = selectAddress;
+window.addAddress = addAddress;
+window.selectPayment = selectPayment;
+window.goToPaymentSettings = goToPaymentSettings;
+window.toggleNotif = toggleNotif;
+window.setAuthMode = setAuthMode;
+window.submitAuth = submitAuth;
+window.continueAsGuest = continueAsGuest;
+window.forgotPassword = forgotPassword;
+window.logout = logout;
+window.startCheckout = startCheckout;
+window.confirmPayment = confirmPayment;
+window.cancelPayment = cancelPayment;
+window.incCartItem = incCartItem;
+window.decCartItem = decCartItem;
+window.removeCartItem = removeCartItem;
+window.goToAddressSettings = goToAddressSettings;
+window.togglePriceInfo = togglePriceInfo;
+window.switchToUmkm = switchToUmkm;
+window.switchToConsumer = switchToConsumer;
+window.setUmkmTab = setUmkmTab;
+window.updateUmkmForm = updateUmkmForm;
+window.submitUmkmSurplus = submitUmkmSurplus;
+window.openTierDetail = openTierDetail;
+window.closeTierDetail = closeTierDetail;
+window.setUmkmAuthMode = setUmkmAuthMode;
+window.submitMitraAuth = submitMitraAuth;
+window.logoutMitra = logoutMitra;
+window.openTierItem = openTierItem;
+window.closeTierItemDetail = closeTierItemDetail;
+window.openTierInfo = openTierInfo;
+window.closeTierInfo = closeTierInfo;
+window.rateShopOrder = rateShopOrder;
+window.openComplaint = openComplaint;
+window.closeComplaint = closeComplaint;
+window.updateComplaintForm = updateComplaintForm;
+window.submitComplaint = submitComplaint;
+
+render();
+</script>
+</body>
+</html>
